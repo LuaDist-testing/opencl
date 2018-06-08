@@ -1,0 +1,17 @@
+---
+title: About OpenCL for Lua
+---
+
+[![](lua-opencl.png "OpenCL for Lua")][OpenCL for Lua]
+[OpenCL for Lua] provides bindings for the Open Compute Language ([OpenCL]),
+an open standard for cross-platform, parallel programming of GPUs, CPUs, and
+other processors. [LuaJIT] is a just-in-time compiler for the [Lua] language
+that provides native C data structures through its foreign function interface
+([FFI]) library. OpenCL for Lua supports up to [OpenCL 1.2] using LuaJIT.
+
+[OpenCL for Lua]: http://colberg.org/lua-opencl/
+[OpenCL]: http://www.khronos.org/opencl/
+[Lua]: http://www.lua.org/about.html
+[LuaJIT]: http://luajit.org/luajit.html
+[FFI]: http://luajit.org/ext_ffi.html
+[OpenCL 1.2]: http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/

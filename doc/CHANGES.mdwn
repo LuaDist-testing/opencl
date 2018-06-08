@@ -1,0 +1,14 @@
+---
+title: Releases
+---
+
+This document lists the changes between stable releases.
+
+The version numbers follow [semantic versioning].
+
+[semantic versioning]: http://semver.org/spec/v2.0.0.html
+
+
+## lua‑opencl 1.0.0 (2014-04-03) {#v1.0.0}
+
+  * Initial release of OpenCL for Lua.

@@ -1,0 +1,13 @@
+---
+title: OpenCL for Lua
+author: Peter Colberg
+date: "2013–2014"
+---
+
+- [OpenCL for Lua](index.html)
+- [Installing](INSTALL.html)
+- [User's Guide](README.html)
+- [Examples](mandelbrot.html)
+- [Reference](reference.html)
+- [Mailing list](https://lists.colberg.org/listinfo/lua-opencl)
+- [Releases](CHANGES.html)

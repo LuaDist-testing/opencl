@@ -1,0 +1,506 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Peter Colberg" />
+  <title>Reference &mdash; OpenCL for Lua</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="pandoc.css" type="text/css" />
+</head>
+<body>
+<div class="header">
+<ul>
+<li><a href="index.html">OpenCL for Lua</a></li>
+<li><a href="INSTALL.html">Installing</a></li>
+<li><a href="README.html">User's Guide</a></li>
+<li><a href="mandelbrot.html">Examples</a></li>
+<li><a href="reference.html">Reference</a></li>
+<li><a href="https://lists.colberg.org/listinfo/lua-opencl">Mailing list</a></li>
+<li><a href="CHANGES.html">Releases</a></li>
+</ul>
+</div>
+<div class="body">
+<h1>Reference</h1>
+<div class="toc">
+<ul>
+<li><a href="#platforms">Platforms</a></li>
+<li><a href="#devices">Devices</a></li>
+<li><a href="#contexts">Contexts</a></li>
+<li><a href="#memory-objects">Memory objects</a></li>
+<li><a href="#programs">Programs</a></li>
+<li><a href="#kernels">Kernels</a></li>
+<li><a href="#command-queues">Command Queues</a></li>
+<li><a href="#events">Events</a></li>
+</ul>
+</div>
+<h2 id="platforms">Platforms</h2>
+<dl>
+<dt><code>opencl.get_platforms()</code></dt>
+<dd><p>Returns a sequence with the available platforms.</p>
+</dd>
+<dt><code>platform:get_info(name)</code></dt>
+<dd><p>Queries information about the platform.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;profile&quot;</strong>: a string, in which case the platform supports
+<ul>
+<li><strong>&quot;FULL_PROFILE&quot;</strong>: the full OpenCL specification,</li>
+<li><strong>&quot;EMBEDDED_PROFILE&quot;</strong>: a subset of the OpenCL specification;</li>
+</ul></li>
+<li><strong>&quot;version&quot;</strong>: a string with the OpenCL version;</li>
+<li><strong>&quot;name&quot;</strong>: a string with the platform name;</li>
+<li><strong>&quot;vendor&quot;</strong>: a string with the platform vendor;</li>
+<li><strong>&quot;extensions&quot;</strong>: a string with a space-separated list of supported extensions.</li>
+</ul>
+</dd>
+</dl>
+<h2 id="devices">Devices</h2>
+<dl>
+<dt><code>platform:get_devices([device_type])</code></dt>
+<dd><p>Returns a sequence of devices available on the platform.</p>
+<p><code>device_type</code> can be one or a sequence of the following:</p>
+<ul>
+<li><strong>&quot;cpu&quot;</strong>: a host processor;</li>
+<li><strong>&quot;gpu&quot;</strong>: a graphics processor;</li>
+<li><strong>&quot;accelerator&quot;</strong>: a dedicated accelerator;</li>
+<li><strong>&quot;default&quot;</strong>: the default device(s) of the platform, of any of the above types;</li>
+<li><strong>&quot;custom&quot;</strong> <em>(OpenCL 1.2)</em>: a dedicated accelerator that does not support OpenCL C kernels.</li>
+</ul>
+<p>If <code>device_type</code> is omitted, the function returns all devices not of type <strong>&quot;custom&quot;</strong>.</p>
+</dd>
+<dt><code>device:create_sub_devices(name, value)</code></dt>
+<dd><p>Partitions the compute units of the device and returns a sequence of sub-devices.</p>
+<p><code>name</code> specifies the partition type, where <code>value</code> specifies</p>
+<ul>
+<li><strong>&quot;equally&quot;</strong>: the number of compute units per partition;</li>
+<li><strong>&quot;by_counts&quot;</strong>: a sequence with the number of compute units of each partition;</li>
+<li><strong>&quot;by_affinity_domain&quot;</strong>: the cache hierarchy shared by the compute units of each partition:
+<ul>
+<li><strong>&quot;numa&quot;</strong>: a NUMA node,</li>
+<li><strong>&quot;l4_cache&quot;</strong>: a level 4 cache,</li>
+<li><strong>&quot;l3_cache&quot;</strong>: a level 3 cache,</li>
+<li><strong>&quot;l2_cache&quot;</strong>: a level 2 cache,</li>
+<li><strong>&quot;l1_cache&quot;</strong>: a level 1 cache,</li>
+<li><strong>&quot;next_partitionable&quot;</strong>: the first cache level along which the device may be partitioned.</li>
+</ul></li>
+</ul>
+<p><em>This function is available with OpenCL 1.2.</em></p>
+</dd>
+<dt><code>device:get_info(name)</code></dt>
+<dd><p>Queries information about the device.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;address_bits&quot;</strong>: the size of the device address space in bits (<strong>32</strong> or <strong>64</strong>);</li>
+<li><strong>&quot;available&quot;</strong>: whether the device is available (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;built_in_kernels&quot;</strong> <em>(OpenCL 1.2)</em>: a semi-colon separated list of built-in kernels;</li>
+<li><strong>&quot;compiler_available&quot;</strong>: whether an OpenCL C compiler is available (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;double_fp_config&quot;</strong> <em>(OpenCL 1.2)</em>: a table with double precision floating-point capabilities (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>denorm</strong>: denormal numbers,</li>
+<li><strong>inf_nan</strong>: infinity and not-a-number,</li>
+<li><strong>round_to_nearest</strong>: round to nearest even number,</li>
+<li><strong>round_to_zero</strong>: round to zero,</li>
+<li><strong>round_to_inf</strong>: round towards positive and negative infinity,</li>
+<li><strong>fma</strong>: fused multiply-add,</li>
+<li><strong>soft_float</strong>: software floating-point implementation;</li>
+</ul></li>
+<li><strong>&quot;endian_little&quot;</strong>: whether the device has little (<strong>true</strong>) or big (<strong>false</strong>) endianness;</li>
+<li><strong>&quot;error_correction_support&quot;</strong>: whether the device corrects memory errors (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;execution_capabilities&quot;</strong>: a table with execution capabilities (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>kernel</strong>: the device can execute kernel functions,</li>
+<li><strong>native_kernel</strong>: the device can execute host functions;</li>
+</ul></li>
+<li><strong>&quot;extensions&quot;</strong>: a space separated list of extension names;</li>
+<li><strong>&quot;global_mem_cache_size&quot;</strong>: the size of the global memory cache in bytes;</li>
+<li><strong>&quot;global_mem_cache_type&quot;</strong>: the type of the global memory cache:
+<ul>
+<li><strong>&quot;read_only&quot;</strong>: read-only,</li>
+<li><strong>&quot;read_write&quot;</strong>: read-write cache;</li>
+</ul></li>
+<li><strong>&quot;global_mem_cacheline_size&quot;</strong>: the size of a global memory cache line in bytes;</li>
+<li><strong>&quot;global_mem_size&quot;</strong>: the size of the global device memory in bytes;</li>
+<li><strong>&quot;half_fp_config&quot;</strong> <em>(OpenCL 1.1)</em>: a table with half precision floating-point capabilities (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>denorm</strong>: denormal numbers,</li>
+<li><strong>inf_nan</strong>: infinity and not-a-number,</li>
+<li><strong>round_to_nearest</strong>: round to nearest even number,</li>
+<li><strong>round_to_zero</strong>: round to zero,</li>
+<li><strong>round_to_inf</strong>: round towards positive and negative infinity,</li>
+<li><strong>fma</strong>: fused multiply-add,</li>
+<li><strong>soft_float</strong>: software floating-point implementation;</li>
+</ul></li>
+<li><strong>&quot;host_unified_memory&quot;</strong> <em>(OpenCL 1.1)</em>: whether device and host have a unified memory subsystem (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;image_support&quot;</strong>: whether the device supports images (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;image2d_max_height&quot;</strong>: maximum height of a 2D image in pixels;</li>
+<li><strong>&quot;image2d_max_width&quot;</strong>: maximum width of a 2D image, or a 1D image not created from a buffer, in pixels;</li>
+<li><strong>&quot;image3d_max_depth&quot;</strong>: maximum depth of a 3D image in pixels;</li>
+<li><strong>&quot;image3d_max_height&quot;</strong>: maximum height of a 3D image in pixels;</li>
+<li><strong>&quot;image3d_max_width&quot;</strong>: maximum width of a 3D image in pixels;</li>
+<li><strong>&quot;image_max_buffer_size&quot;</strong> <em>(OpenCL 1.2)</em>: maximum number of pixels in a 1D image created from a buffer;</li>
+<li><strong>&quot;image_max_array_size&quot;</strong> <em>(OpenCL 1.2)</em>: maximum number of images in a 1D or 2D image array;</li>
+<li><strong>&quot;linker_available&quot;</strong> <em>(OpenCL 1.2)</em>: whether a linker is available (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;local_mem_size&quot;</strong>: the size of the local memory in bytes;</li>
+<li><strong>&quot;local_mem_type&quot;</strong>: the type of the local memory:
+<ul>
+<li><strong>&quot;local&quot;</strong>: dedicated local memory storage,</li>
+<li><strong>&quot;global&quot;</strong>: global device memory;</li>
+</ul></li>
+<li><strong>&quot;max_clock_frequency&quot;</strong>: the maximum clock frequency of the device in MHz;</li>
+<li><strong>&quot;max_compute_units&quot;</strong>: the maximum number of compute units on the device;</li>
+<li><strong>&quot;max_constant_args&quot;</strong>: the maximum number of kernel arguments with a <code>__constant</code> qualifier;</li>
+<li><strong>&quot;max_constant_buffer_size&quot;</strong>: the maximum size of a constant buffer in bytes;</li>
+<li><strong>&quot;max_mem_alloc_size&quot;</strong>: the maximum size of a memory buffer;</li>
+<li><strong>&quot;max_parameter_size&quot;</strong>: the maximum size in bytes of the arguments passed to a kernel function;</li>
+<li><strong>&quot;max_read_image_args&quot;</strong>: the maximum number of images that can be read by a kernel function;</li>
+<li><strong>&quot;max_samplers&quot;</strong>: the maximum number of samples that can be used by a kernel function;</li>
+<li><strong>&quot;max_work_group_size&quot;</strong>: the maximum number of work-items in a work-group;</li>
+<li><strong>&quot;max_work_item_dimensions&quot;</strong>: the maximum number of dimensions of the global and local work-item IDs;</li>
+<li><strong>&quot;max_work_item_sizes&quot;</strong>: a sequence with the maximum number of work-items for each dimension;</li>
+<li><strong>&quot;max_write_image_args&quot;</strong>: the maximum number of images that can be written to by a kernel function;</li>
+<li><strong>&quot;mem_base_addr_align&quot;</strong>: the alignment in bytes of the starting address of a buffer;</li>
+<li><strong>&quot;min_data_type_align_size&quot;</strong>: the smallest alignment in bytes for any data type;</li>
+<li><strong>&quot;name&quot;</strong>: the device name;</li>
+<li><strong>&quot;native_vector_width_char&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>char</code> vector;</li>
+<li><strong>&quot;native_vector_width_short&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>short</code> vector;</li>
+<li><strong>&quot;native_vector_width_int&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>int</code> vector;</li>
+<li><strong>&quot;native_vector_width_long&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>long</code> vector;</li>
+<li><strong>&quot;native_vector_width_float&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>float</code> vector;</li>
+<li><strong>&quot;native_vector_width_double&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>double</code> vector;</li>
+<li><strong>&quot;native_vector_width_half&quot;</strong> <em>(OpenCL 1.1)</em>: native number of scalar elements in a <code>half</code> vector;</li>
+<li><strong>&quot;opencl_c_version&quot;</strong> <em>(OpenCL 1.1)</em>: a string with the supported OpenCL C version;</li>
+<li><strong>&quot;parent_device&quot;</strong> <em>(OpenCL 1.2)</em>: the parent device of a sub-device;</li>
+<li><strong>&quot;partition_max_sub_devices&quot;</strong> <em>(OpenCL 1.2)</em>: the maximum number of sub-devices;</li>
+<li><strong>&quot;partition_properties&quot;</strong> <em>(OpenCL 1.2)</em>: a table with the supported partition types (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>equally</strong>: partitions of equal size,</li>
+<li><strong>by_counts</strong>: partitions of different sizes,</li>
+<li><strong>by_affinity_domain</strong>: partitions by affinity domains;</li>
+</ul></li>
+<li><strong>&quot;partition_affinity_domain&quot;</strong> <em>(OpenCL 1.2)</em>: a table with the supported affinity domains (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>numa</strong>: partition by NUMA node,</li>
+<li><strong>l4_cache</strong>: partition by L4 cache,</li>
+<li><strong>l3_cache</strong>: partition by L3 cache,</li>
+<li><strong>l2_cache</strong>: partition by L2 cache,</li>
+<li><strong>l1_cache</strong>: partition by L1 cache,</li>
+<li><strong>next_partitionable</strong>: partition by next partitionable affinity domain;</li>
+</ul></li>
+<li><strong>&quot;partition_type&quot;</strong> <em>(OpenCL 1.2)</em>: the partition property and the partition property value of the sub-device;</li>
+<li><strong>&quot;platform&quot;</strong>: the platform;</li>
+<li><strong>&quot;preferred_vector_width_char&quot;</strong>: preferred number of scalar elements in a <code>char</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_short&quot;</strong>: preferred number of scalar elements in a <code>short</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_int&quot;</strong>: preferred number of scalar elements in a <code>int</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_long&quot;</strong>: preferred number of scalar elements in a <code>long</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_float&quot;</strong>: preferred number of scalar elements in a <code>float</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_double&quot;</strong>: preferred number of scalar elements in a <code>double</code> vector;</li>
+<li><strong>&quot;preferred_vector_width_half&quot;</strong>: preferred number of scalar elements in a <code>half</code> vector;</li>
+<li><strong>&quot;printf_buffer_size&quot;</strong> <em>(OpenCL 1.2)</em>: maximum size in bytes of the buffer that holds the output of printf;</li>
+<li><strong>&quot;preferred_interop_user_sync&quot;</strong> <em>(OpenCL 1.2)</em>: whether user synchronization is preferred (<strong>true</strong> or <strong>false</strong>);</li>
+<li><strong>&quot;profile&quot;</strong>: a string, in which case the device supports
+<ul>
+<li><strong>&quot;FULL_PROFILE&quot;</strong>: the full OpenCL specification,</li>
+<li><strong>&quot;EMBEDDED_PROFILE&quot;</strong>: a subset of the OpenCL specification;</li>
+</ul></li>
+<li><strong>&quot;profiling_timer_resolution&quot;</strong>: the resolution of the device timer in nanoseconds;</li>
+<li><strong>&quot;queue_properties&quot;</strong>: a table with the supported command-queue properties (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>out_of_order_exec_mode</strong>: out-of-order execution,</li>
+<li><strong>profiling</strong>: execution profiling;</li>
+</ul></li>
+<li><strong>&quot;single_fp_config&quot;</strong>: a table with single precision floating-point capabilities (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>denorm</strong>: denormal numbers,</li>
+<li><strong>inf_nan</strong>: infinity and not-a-number,</li>
+<li><strong>round_to_nearest</strong>: round to nearest even number,</li>
+<li><strong>round_to_zero</strong>: round to zero,</li>
+<li><strong>round_to_inf</strong>: round towards positive and negative infinity,</li>
+<li><strong>fma</strong>: fused multiply-add,</li>
+<li><strong>soft_float</strong> <em>(OpenCL 1.1)</em>: software floating-point implementation;</li>
+</ul></li>
+<li><strong>&quot;type&quot;</strong>: a table with the device types (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>cpu</strong>: a host processor,</li>
+<li><strong>gpu</strong>: a graphics processor,</li>
+<li><strong>accelerator</strong>: a dedicated accelerator,</li>
+<li><strong>default</strong>: a default device of the platform,</li>
+<li><strong>custom</strong>: a dedicated accelerator that does not support OpenCL C kernels;</li>
+</ul></li>
+<li><strong>&quot;vendor&quot;</strong>: a string with the vendor name;</li>
+<li><strong>&quot;vendor_id&quot;</strong>: a number that uniquely identifies the vendor;</li>
+<li><strong>&quot;version&quot;</strong>: a string with the supported OpenCL version.</li>
+<li><strong>&quot;driver_version&quot;</strong>: a string with the OpenCL driver version;</li>
+</ul>
+</dd>
+</dl>
+<h2 id="contexts">Contexts</h2>
+<dl>
+<dt><code>opencl.create_context(devices)</code></dt>
+<dd><p>Creates and returns a context given a sequence of devices.</p>
+</dd>
+<dt><code>context:get_info(name)</code></dt>
+<dd><p>Queries information about the context.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;num_devices&quot;</strong> <em>(OpenCL 1.1)</em>: the number of devices in the context;</li>
+<li><strong>&quot;devices&quot;</strong>: a sequence with the devices in the context.</li>
+</ul>
+</dd>
+</dl>
+<h2 id="memory-objects">Memory objects</h2>
+<dl>
+<dt><code>context:create_buffer([flags, ]size[, host_ptr])</code></dt>
+<dd><p>Creates and returns a buffer object of the given size in bytes.</p>
+<p><code>flags</code> can be one or a sequence of the following:</p>
+<ul>
+<li><strong>&quot;read_write</strong>&quot;: the buffer will be read and written by a kernel (the default);</li>
+<li><strong>&quot;write_only</strong>&quot;: the buffer will be written but not read by a kernel;</li>
+<li><strong>&quot;read_only</strong>&quot;: the buffer will be read but not written by a kernel;</li>
+<li><strong>&quot;use_host_ptr</strong>&quot;: the buffer should be stored in the memory given by <code>host_ptr</code>;</li>
+<li><strong>&quot;alloc_host_ptr</strong>&quot;: the buffer should be allocated in host-accessible memory;</li>
+<li><strong>&quot;copy_host_ptr</strong>&quot;: initialize the buffer by copying data from <code>host_ptr</code>;</li>
+<li><strong>&quot;host_write_only</strong>&quot; <em>(OpenCL 1.2)</em>: the buffer will be written but not read by the host;</li>
+<li><strong>&quot;host_read_only</strong>&quot; <em>(OpenCL 1.2)</em>: the buffer will be read but not written by the host;</li>
+<li><strong>&quot;host_no_access</strong>&quot; <em>(OpenCL 1.2)</em>: the buffer will be neither read nor written by the host.</li>
+</ul>
+</dd>
+<dt><code>mem:create_sub_buffer([flags, ]create_type, create_info)</code></dt>
+<dd><p>Creates and returns a buffer object from an existing buffer object.</p>
+<p><code>create_type</code> can be one of the following:</p>
+<ul>
+<li><p><strong>&quot;region&quot;</strong>: creates a sub-buffer from a region of the given buffer.</p>
+<p><code>create_info</code> specifies a sequence with the origin and size of the region in bytes.</p></li>
+</ul>
+<p><em>This function is available with OpenCL 1.1.</em></p>
+</dd>
+<dt><code>mem:get_info(name)</code></dt>
+<dd><p>Queries information about the memory object.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;type&quot;</strong>: the type of the memory object:
+<ul>
+<li><strong>&quot;buffer&quot;</strong>: a memory buffer,</li>
+<li><strong>&quot;image1d&quot;</strong>: a 1D image,</li>
+<li><strong>&quot;image1d_buffer&quot;</strong>: a 1D image created from a buffer,</li>
+<li><strong>&quot;image1d_array&quot;</strong>: a 1D array image,</li>
+<li><strong>&quot;image2d&quot;</strong>: a 2D image buffer,</li>
+<li><strong>&quot;image2d_array&quot;</strong>: a 2D array image,</li>
+<li><strong>&quot;image3d&quot;</strong>: a 3D image buffer;</li>
+</ul></li>
+<li><strong>&quot;flags&quot;</strong>: a table with the flags specified when the memory object was created (<strong>true</strong> or <strong>nil</strong>);</li>
+<li><strong>&quot;size&quot;</strong>: the size of the memory object in bytes;</li>
+<li><strong>&quot;host_ptr&quot;</strong>: the host pointer specified when the memory object was created;</li>
+<li><strong>&quot;map_count</strong>&quot;: the number of mapped memory regions;</li>
+<li><strong>&quot;context&quot;</strong>: the context of the memory object;</li>
+<li><strong>&quot;associated_memobject&quot;</strong> <em>(OpenCL 1.1)</em>: the memory object associated with a sub-buffer;</li>
+<li><strong>&quot;offset&quot;</strong> <em>(OpenCL 1.1)</em>: the offset in bytes of a sub-buffer.</li>
+</ul>
+</dd>
+</dl>
+<h2 id="programs">Programs</h2>
+<dl>
+<dt><code>context:create_program_with_source(source)</code></dt>
+<dd><p>Creates and returns a program from source code.</p>
+<p><code>source</code> specifies a string that contains the OpenCL C source code.</p>
+</dd>
+<dt><code>program:build([[devices, ]options])</code></dt>
+<dd><p>Compiles and links an executable from program source or binary. An optional argument <code>devices</code> specifies a sequence of devices that the program is built for; otherwise, if <code>devices</code> is omitted, the program is built for all devices in the context. A second, optional argument <code>options</code> specifies a string that contains <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/clBuildProgram.html#idp8470544">compiler options</a>.</p>
+</dd>
+<dt><code>program:get_info(name)</code></dt>
+<dd><p>Queries information about the program.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;context&quot;</strong>: the context of the program;</li>
+<li><strong>&quot;num_devices&quot;</strong>: the number of devices associated with the program;</li>
+<li><strong>&quot;devices&quot;</strong>: a sequence with the devices associated with the program;</li>
+<li><strong>&quot;source&quot;</strong>: a string with the source code of the program.</li>
+<li><strong>&quot;binary_sizes&quot;</strong>: a sequence with the sizes in bytes of the program binaries;</li>
+<li><strong>&quot;binaries&quot;</strong>: a sequence of strings with the programs binaries;</li>
+<li><strong>&quot;num_kernels&quot;</strong> <em>(OpenCL 1.2)</em>: the number of kernels in the program;</li>
+<li><strong>&quot;kernel_names&quot;</strong> <em>(OpenCL 1.2)</em>: a string with a semicolon-separated list of kernel names;</li>
+</ul>
+</dd>
+<dt><code>program:get_build_info(device, name)</code></dt>
+<dd><p>Query build information for a device about the program.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;status&quot;</strong>: the build status:
+<ul>
+<li><strong>&quot;error&quot;</strong>: the build failed,</li>
+<li><strong>&quot;success&quot;</strong>: the build succeeded,</li>
+<li><strong>&quot;in_progress&quot;</strong>: the build has not finished;</li>
+</ul></li>
+<li><strong>&quot;options&quot;</strong>: a string with the compiler output;</li>
+<li><strong>&quot;log&quot;</strong>: a string with the compiler options;</li>
+<li><strong>&quot;binary_type&quot;</strong> <em>(OpenCL 1.2)</em>: the program binary type:
+<ul>
+<li><strong>&quot;compiled_object&quot;</strong>: the program has been compiled to an object file,</li>
+<li><strong>&quot;library&quot;</strong>: the program has been linked into a library,</li>
+<li><strong>&quot;executable&quot;</strong>: the program has been linked into an executable.</li>
+</ul></li>
+</ul>
+</dd>
+</dl>
+<h2 id="kernels">Kernels</h2>
+<dl>
+<dt><code>program:create_kernel(name)</code></dt>
+<dd><p>Returns a kernel object for the kernel with the given name.</p>
+</dd>
+<dt><code>program:create_kernels_in_program()</code></dt>
+<dd><p>Returns a sequence of kernel objects in the program.</p>
+</dd>
+<dt><code>kernel:set_arg(index, [size, ]value)</code></dt>
+<dd><p>Sets the value of the kernel argument at the given 0-based <code>index</code>.</p>
+<p>For <code>__global</code> or <code>__constant</code> arguments, <code>value</code> is a memory object, or <strong>nil</strong>.</p>
+<p>For arguments of type <code>sampler_t</code>, <code>value</code> specifies a sampler object.</p>
+<p>For <code>__local</code> arguments, <code>size</code> specifies the amount of local memory in bytes.</p>
+<p>For other arguments, <code>value</code> is a pointer to a buffer of <code>size</code> bytes.</p>
+</dd>
+<dt><code>kernel:get_info(name)</code></dt>
+<dd><p>Queries information about the kernel.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;function_name</strong>&quot;: the name of the kernel function;</li>
+<li><strong>&quot;num_args</strong>&quot;: the number of kernel arguments;</li>
+<li><strong>&quot;context</strong>&quot;: the context;</li>
+<li><strong>&quot;program</strong>&quot;: the program;</li>
+<li><strong>&quot;attributes</strong>&quot; <em>(OpenCL 1.2)</em>: a string with a space-separated list of kernel attributes.</li>
+</ul>
+</dd>
+<dt><code>kernel:get_work_group_info([device, ]name)</code></dt>
+<dd><p>Query work group information for a device about the kernel.</p>
+<p><code>device</code> may be omitted if the kernel is associated with a single device.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;global_work_size&quot;</strong> <em>(OpenCL 1.2)</em>: a sequence with the maximum global sizes, for a <em>custom</em> device;</li>
+<li><strong>&quot;work_group_size&quot;</strong>: the maximum work-group size;</li>
+<li><strong>&quot;compile_work_group_size&quot;</strong>: a sequence with the required work-group sizes;</li>
+<li><strong>&quot;local_mem_size&quot;</strong>: the amount of local memory in bytes used by a work group;</li>
+<li><strong>&quot;preferred_work_group_size_multiple&quot;</strong> <em>(OpenCL 1.1)</em>: the preferred multiple of the work-group size;</li>
+<li><strong>&quot;private_mem_size&quot;</strong> <em>(OpenCL 1.1)</em>: the amount of private memory used by a work item.</li>
+</ul>
+</dd>
+</dl>
+<h2 id="command-queues">Command Queues</h2>
+<dl>
+<dt><code>context:create_command_queue(device[, properties])</code></dt>
+<dd><p>Creates and returns a command queue on the given device.</p>
+<p><code>properties</code> can be one or a sequence of the following:</p>
+<ul>
+<li><strong>&quot;out_of_order_exec_mode</strong>&quot;: enable out-of-order execution of commands;</li>
+<li><strong>&quot;profiling</strong>&quot;: enable profiling of commands.</li>
+</ul>
+</dd>
+<dt><code>queue:get_info(name)</code></dt>
+<dd><p>Queries information about the command queue.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;context</strong>&quot;: the context;</li>
+<li><strong>&quot;device</strong>&quot;: the device;</li>
+<li><strong>&quot;properties</strong>&quot;: a table with the command-queue properties.</li>
+</ul>
+</dd>
+<dt><code>queue:enqueue_ndrange_kernel(kernel, global_offset, global_size[, local_size[, events]])</code></dt>
+<dd><p>Enqueues a command that executes a kernel, and returns an event object for the command.</p>
+<p><code>global_size</code> is a sequence that specifies the number of global work items for each dimension. <code>global_offset</code> is a sequence that specifies the corresponding offsets of the global IDs; or <strong>nil</strong>, in which case the offsets default to <strong>{0, …, 0}</strong>.</p>
+<p><code>local_size</code> is a sequences that specifies the number of work items per work-group for each dimension; or <strong>nil</strong>, in which case the work-group size is chosen by the implementation.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_map_buffer(buffer, blocking, flags, offset, size[, events])</code></dt>
+<dd><p>Enqueues a command that maps a region from a buffer object into host memory, and returns a pointer to the mapped memory region and an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command maps the buffer region specified by <code>offset</code> and <code>size</code> in bytes.</p>
+<p><code>flags</code> can be one or a sequence of the following:</p>
+<ul>
+<li><strong>&quot;read&quot;</strong>: the buffer region is mapped for reading;</li>
+<li><strong>&quot;write&quot;</strong>: the buffer region is mapped for writing;</li>
+<li><strong>&quot;write_invalidate_region&quot;</strong> <em>(OpenCL 1.2)</em>: the buffer region is mapped for writing only.</li>
+</ul>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_unmap_mem_object(mem, ptr[, events])</code></dt>
+<dd><p>Enqueues a command that unmaps a mapped memory region for the given memory object.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_read_buffer(buffer, blocking, offset, size, ptr[, events])</code></dt>
+<dd><p>Enqueues a command that reads from a buffer object to host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command reads from the buffer region specified by <code>offset</code> and <code>size</code> in bytes. The command writes to the host memory region specified by <code>ptr</code>.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_write_buffer(buffer, blocking, offset, size, ptr[, events])</code></dt>
+<dd><p>Enqueues a command that writes to a buffer object from host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command writes to the buffer region specified by <code>offset</code> and <code>size</code> in bytes. The command reads from the host memory region specified by <code>ptr</code>.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_copy_buffer(src_buffer, dst_buffer, src_offset, dst_offset, size[, events])</code></dt>
+<dd><p>Enqueues a command that copies from a source buffer to a destination buffer, and returns an event object for the command. The command copies <code>size</code> bytes from the source buffer region specified by <code>src_offset</code> in bytes to the destination buffer region specified by <code>dst_offset</code> in bytes.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+</dd>
+<dt><code>queue:enqueue_fill_buffer(buffer, pattern, pattern_size, offset, size[, events])</code></dt>
+<dd><p>Enqueues a command that fills a buffer with a constant value, and returns an event object for the command. The command reads <code>pattern_size</code> bytes from the buffer pointed to by <code>pattern</code>, and fills the buffer region specified by <code>offset</code> and <code>size</code> in bytes, where <code>size</code> must be a multiple of <code>pattern_size</code>.</p>
+<p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
+<p><em>This function is available with OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:enqueue_marker_with_wait_list([events])</code></dt>
+<dd><p>Enqueues a command that waits for the given events to complete, and returns an event object for the command. If <code>events</code> is omitted, the command waits for all previously enqueued commands.</p>
+<p><em>This function is available with OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:enqueue_marker()</code></dt>
+<dd><p>Enqueues a command that waits for all previously enqueued commands to complete, and returns an event object for the command.</p>
+<p><em>This function has been deprecated in OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:enqueue_barrier_with_wait_list([events])</code></dt>
+<dd><p>Enqueues a command that waits for the given events to complete, and returns an event object for the command. If <code>events</code> is omitted, the command waits for all previously enqueued commands.</p>
+<p>The command blocks execution of all subsequently enqueued commands.</p>
+<p><em>This function is available with OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:enqueue_barrier()</code></dt>
+<dd><p>Enqueues a command that for all previously enqueued commands to complete.</p>
+<p>The command blocks execution of all subsequently enqueued commands.</p>
+<p><em>This function has been deprecated in OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:flush()</code></dt>
+<dd><p>Submits all previously enqueued commands to the device. The function ensures that the commands will eventually be executed, which is useful when the enqueued commands are being waited on by commands in a different queue.</p>
+</dd>
+<dt><code>queue:finish()</code></dt>
+<dd><p>Blocks until all previously enqueued commands have completed.</p>
+</dd>
+</dl>
+<h2 id="events">Events</h2>
+<dl>
+<dt><code>opencl.wait_for_events(events)</code></dt>
+<dd><p>Blocks until the commands associated with the given events have completed.</p>
+</dd>
+<dt><code>event:get_info(name)</code></dt>
+<dd><p>Queries information about the event.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;command_queue</strong>&quot;: the command queue associated with the event;</li>
+<li><strong>&quot;context</strong>&quot; <em>(OpenCL 1.1)</em>: the context associated with the event;</li>
+<li><strong>&quot;command_type</strong>&quot;: a string with the command associated with the event;</li>
+<li><strong>&quot;command_execution_status</strong>&quot;: the execution status of the command:
+<ul>
+<li><strong>&quot;queued&quot;</strong>: the command has been enqueued in the command queue,</li>
+<li><strong>&quot;submitted&quot;</strong>: the command has been submitted to the device,</li>
+<li><strong>&quot;running&quot;</strong>: the execution of the command has started,</li>
+<li><strong>&quot;complete&quot;</strong>: the execution of the command has finished;</li>
+</ul></li>
+</ul>
+</dd>
+<dt><code>event:get_profiling_info(name)</code></dt>
+<dd><p>Queries profiling information about the command associated with the event.</p>
+<p>The function returns a 64-bit integer with a device time in nanoseconds.</p>
+<p><code>name</code> can be any of the following, in which case the function returns</p>
+<ul>
+<li><strong>&quot;queued&quot;</strong>: the time when the command was enqueued;</li>
+<li><strong>&quot;submit&quot;</strong>: the time when the command was submitted to the device;</li>
+<li><strong>&quot;start&quot;</strong>: the time when the execution of the command started;</li>
+<li><strong>&quot;end&quot;</strong>: the time when the execution of the command finished.</li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="footer">
+&copy; Copyright 2013–2014, Peter Colberg.
+Created using <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.
+</div>
+</body>
+</html>

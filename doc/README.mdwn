@@ -1,0 +1,215 @@
+---
+title: User's Guide
+---
+
+If you are new to [OpenCL], begin by reading about its architecture in
+Chapter 3 of the [OpenCL Specification].
+
+[OpenCL]: https://www.khronos.org/opencl/
+[OpenCL Specification]: https://www.khronos.org/registry/cl/specs/opencl-1.2.pdf
+
+
+Getting started
+---------------
+
+Consider a monoatomic gas with $N$ molecules of mass $m$ in equilibrium at
+temperature $T$. From the [equipartition theorem] we know that in the
+thermodynamic limit, $N\to\infty$, the average kinetic energy of a molecule with
+three degrees of freedom is $\langle E\rangle = \frac{3}{2}\,k_\text{B} T$. We
+will estimate the energy through [parallel summation] of $N$ molecule velocities,
+$\langle E\rangle\simeq\frac{m}{2N}\,\sum_{i = 1}^N v_i^2$.
+
+[equipartition theorem]: https://en.wikipedia.org/wiki/Equipartition_theorem
+[parallel summation]: https://en.wikipedia.org/wiki/Prefix_sum#Parallel_algorithm
+
+The program begins with setting up the OpenCL environment:
+
+~~~ {.lua}
+local platform = cl.get_platforms()[1]
+local device = platform:get_devices()[1]
+local context = cl.create_context({device})
+local queue = context:create_command_queue(device)
+~~~
+
+Each platform corresponds to an OpenCL driver and provides one or more devices.
+A context is created on one or more devices of the same platform. In a context
+we can allocate memory buffers that are shared among all devices of that
+context. The OpenCL driver copies contents of buffers between devices when
+needed, for example between the host and a discrete GPU. Commands that read,
+write and copy buffers, or execute computations on a device, are scheduled in
+command queues. By default, commands are executed in order of submission to a
+queue.
+
+We prepare the system by choosing the velocities of the molecules from a
+[Maxwell-Boltzmann distribution] with temperature $\sqrt{k_\text{B}T/m} = 1$,
+which is the standard normal distribution. We map the buffer that stores the
+velocities for writing, which yields a pointer that is accessible by the host
+program, write the velocities and unmap the buffer.
+
+[Maxwell-Boltzmann distribution]: https://en.wikipedia.org/wiki/Maxwell-Boltzmann_distribution
+
+~~~ {.lua}
+local N = 1000000
+local d_v = context:create_buffer(N * ffi.sizeof("cl_double3"))
+local v = ffi.cast("cl_double3 *", queue:enqueue_map_buffer(d_v, true, "write", 0, N * ffi.sizeof("cl_double3")))
+for i = 0, N - 1, 2 do
+  v[i].x, v[i + 1].x = random.normal()
+  v[i].y, v[i + 1].y = random.normal()
+  v[i].z, v[i + 1].z = random.normal()
+end
+queue:enqueue_unmap_mem_object(d_v, v)
+~~~
+
+On a CPU, unmapping the buffer has no impact. On a discrete GPU, the contents
+of the buffer are copied to the device.
+
+With OpenCL a computation is partitioned into a given number of work items.
+Work items are arranged into work groups of a given work-group size. Work
+items that belong to the same work group may exchange data via local memory
+with low latency.
+
+For the parallel summation we choose work dimensions of powers of two:
+
+~~~ {.lua}
+local work_size = 128
+local num_groups = 512
+local glob_size = num_groups * work_size
+~~~
+
+The optimal work dimensions need to be determined by performing measurements of
+the run-time. Although the optimal work dimensions vary from device to device,
+modern GPUs for example have similar architectures with thousands of scalar
+cores, and a single set of work dimensions can yield close to optimal
+run-times across different GPUs.
+
+Each work item independently computes a partial sum, which reduces the
+number of summands from the number of molecules (1000000) to the global
+number of work items (65536). The partial sums are stored in local memory
+and gradually summed in a pairwise manner. At each step the number of work
+items that carry out an addition reduces by half, while the other work
+items idle.
+
+![Parallel summation of partially-summed velocities using 8 work items.](parallel_sum.svg)
+
+Note how in each step the collective memory accesses of work items within a
+group are contiguous. This linear pattern is generally the most efficient
+memory access pattern, whether accessing local memory of low latency or global
+memory of high latency.
+
+The OpenCL C kernel that sums the molecule velocities is included in the Lua
+program:
+
+~~~ {.lua}
+local temp = templet.loadstring[[
+#ifndef CL_VERSION_1_2
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#endif
+
+__kernel void sum(__global const double3 *restrict d_v,
+                  __global double *restrict d_en)
+{
+  const long gid = get_global_id(0);
+  const long lid = get_local_id(0);
+  const long wid = get_group_id(0);
+  __local double l_en[${work_size}];
+
+  double en = 0;
+  for (long i = gid; i < ${N}; i += ${glob_size}) {
+    en += dot(d_v[i], d_v[i]);
+  }
+  l_en[lid] = en;
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+  |local i = work_size
+  |while i > 1 do
+  |  i = i / 2
+  if (lid < ${i}) l_en[lid] += l_en[lid + ${i}];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  |end
+
+  if (lid == 0) d_en[wid] = l_en[0];
+}
+]]
+~~~
+
+The kernel code contains Lua expressions `${...}` and statements `|...`.
+Before compiling the kernel for the device, we preprocess the code with
+[Templet] to substitute parameters such as the number of molecules `N` and
+unroll parallel summing.
+
+[Templet]: http://colberg.org/lua-templet
+
+After template expansion the code for parallel summing becomes
+
+~~~ {.c}
+  if (lid < 64) l_en[lid] += l_en[lid + 64];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 32) l_en[lid] += l_en[lid + 32];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 16) l_en[lid] += l_en[lid + 16];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 8) l_en[lid] += l_en[lid + 8];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 4) l_en[lid] += l_en[lid + 4];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 2) l_en[lid] += l_en[lid + 2];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (lid < 1) l_en[lid] += l_en[lid + 1];
+  barrier(CLK_LOCAL_MEM_FENCE);
+~~~
+
+Between each summation step the work items of a group are synchronized using a
+local-memory barrier that ensures a consistent state among work items of the
+contents of local memory after the barrier. Since the compiler knows exactly
+which work items are summing and which are idling, it is able to optimize away
+unneeded synchronization points. On GPUs, work items within groups of 64 or 32,
+depending on the vendor, operate in lock-step and do not require explicit
+synchronization.
+
+In the host program we preprocess and compile the OpenCL C source code:
+
+~~~ {.lua}
+local source = temp({N = N, work_size = work_size, glob_size = glob_size})
+local program = context:create_program_with_source(source)
+local status, err = pcall(function() return program:build() end)
+io.stderr:write(program:get_build_info(device, "log"))
+if not status then error(err) end
+~~~
+
+The call to `program:build()` is wrapped with [pcall] to intercept a potential
+build failure and output compiler messages before raising an error. We are also
+interested in compiler messages if the program build succeeds, since it may
+contain non-fatal warnings that hint programming errors.
+
+[pcall]: http://www.lua.org/manual/5.2/manual.html#pdf-pcall
+
+Once the program is built we acquire and execute the `sum` kernel function:
+
+~~~ {.lua}
+local kernel = program:create_kernel("sum")
+local d_en = context:create_buffer(num_groups * ffi.sizeof("cl_double"))
+kernel:set_arg(0, d_v)
+kernel:set_arg(1, d_en)
+queue:enqueue_ndrange_kernel(kernel, nil, {glob_size}, {work_size})
+~~~
+
+The kernel receives an input buffer with the velocities and an output buffer
+that stores the partial sum of each work group.
+
+Finally we map the buffer for reading on the host and compute the average
+kinetic energy per molecule.
+
+~~~ {.lua}
+local sum = 0
+local en = ffi.cast("cl_double *", queue:enqueue_map_buffer(d_en, true, "read", 0, num_groups * ffi.sizeof("cl_double")))
+for i = 0, num_groups - 1 do sum = sum + en[i] end
+queue:enqueue_unmap_mem_object(d_en, en)
+print(0.5 * sum / N)
+~~~
+
+~~~
+1.4977721207647
+~~~
+
+The result is close to the exact energy of $\frac{3}{2} k_\text{B}T$ within
+the error of $\frac{3}{2}/\sqrt{N} \approx 0.002$.

@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Peter Colberg" />
+  <title>User's Guide &mdash; OpenCL for Lua</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" href="pandoc.css" type="text/css" />
+  <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+<div class="header">
+<ul>
+<li><a href="index.html">OpenCL for Lua</a></li>
+<li><a href="INSTALL.html">Installing</a></li>
+<li><a href="README.html">User's Guide</a></li>
+<li><a href="mandelbrot.html">Examples</a></li>
+<li><a href="reference.html">Reference</a></li>
+<li><a href="https://lists.colberg.org/listinfo/lua-opencl">Mailing list</a></li>
+<li><a href="CHANGES.html">Releases</a></li>
+</ul>
+</div>
+<div class="body">
+<h1>User's Guide</h1>
+<div class="toc">
+<ul>
+<li><a href="#getting-started">Getting started</a></li>
+</ul>
+</div>
+<p>If you are new to <a href="https://www.khronos.org/opencl/">OpenCL</a>, begin by reading about its architecture in Chapter 3 of the <a href="https://www.khronos.org/registry/cl/specs/opencl-1.2.pdf">OpenCL Specification</a>.</p>
+<h2 id="getting-started">Getting started</h2>
+<p>Consider a monoatomic gas with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi></mrow></math> molecules of mass <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>m</mi></mrow></math> in equilibrium at temperature <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>T</mi></mrow></math>. From the <a href="https://en.wikipedia.org/wiki/Equipartition_theorem">equipartition theorem</a> we know that in the thermodynamic limit, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi><mo>→</mo><mo>∞</mo></mrow></math>, the average kinetic energy of a molecule with three degrees of freedom is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">⟨</mo><mi>E</mi><mo stretchy="false">⟩</mo><mo>=</mo><mfrac><mn>3</mn><mn>2</mn></mfrac><mspace width="0.167em"></mspace><msub><mi>k</mi><mtext mathvariant="normal">B</mtext></msub><mi>T</mi></mrow></math>. We will estimate the energy through <a href="https://en.wikipedia.org/wiki/Prefix_sum#Parallel_algorithm">parallel summation</a> of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi></mrow></math> molecule velocities, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">⟨</mo><mi>E</mi><mo stretchy="false">⟩</mo><mo>≃</mo><mfrac><mi>m</mi><mrow><mn>2</mn><mi>N</mi></mrow></mfrac><mspace width="0.167em"></mspace><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></msubsup><msubsup><mi>v</mi><mi>i</mi><mn>2</mn></msubsup></mrow></math>.</p>
+<p>The program begins with setting up the OpenCL environment:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> platform <span class="ot">=</span> cl<span class="ot">.</span>get_platforms<span class="ot">()[</span><span class="dv">1</span><span class="ot">]</span>
+<span class="kw">local</span> device <span class="ot">=</span> platform:get_devices<span class="ot">()[</span><span class="dv">1</span><span class="ot">]</span>
+<span class="kw">local</span> context <span class="ot">=</span> cl<span class="ot">.</span>create_context<span class="ot">({</span>device<span class="ot">})</span>
+<span class="kw">local</span> queue <span class="ot">=</span> context:create_command_queue<span class="ot">(</span>device<span class="ot">)</span></code></pre>
+<p>Each platform corresponds to an OpenCL driver and provides one or more devices. A context is created on one or more devices of the same platform. In a context we can allocate memory buffers that are shared among all devices of that context. The OpenCL driver copies contents of buffers between devices when needed, for example between the host and a discrete GPU. Commands that read, write and copy buffers, or execute computations on a device, are scheduled in command queues. By default, commands are executed in order of submission to a queue.</p>
+<p>We prepare the system by choosing the velocities of the molecules from a <a href="https://en.wikipedia.org/wiki/Maxwell-Boltzmann_distribution">Maxwell-Boltzmann distribution</a> with temperature <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><msqrt><mrow><msub><mi>k</mi><mtext mathvariant="normal">B</mtext></msub><mi>T</mi><mo>/</mo><mi>m</mi></mrow></msqrt><mo>=</mo><mn>1</mn></mrow></math>, which is the standard normal distribution. We map the buffer that stores the velocities for writing, which yields a pointer that is accessible by the host program, write the velocities and unmap the buffer.</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> N <span class="ot">=</span> <span class="dv">1000000</span>
+<span class="kw">local</span> d_v <span class="ot">=</span> context:create_buffer<span class="ot">(</span>N <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_double3&quot;</span><span class="ot">))</span>
+<span class="kw">local</span> v <span class="ot">=</span> ffi<span class="ot">.</span>cast<span class="ot">(</span><span class="st">&quot;cl_double3 *&quot;</span><span class="ot">,</span> queue:enqueue_map_buffer<span class="ot">(</span>d_v<span class="ot">,</span> <span class="kw">true</span><span class="ot">,</span> <span class="st">&quot;write&quot;</span><span class="ot">,</span> <span class="dv">0</span><span class="ot">,</span> N <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_double3&quot;</span><span class="ot">)))</span>
+<span class="kw">for</span> i <span class="ot">=</span> <span class="dv">0</span><span class="ot">,</span> N <span class="ot">-</span> <span class="dv">1</span><span class="ot">,</span> <span class="dv">2</span> <span class="kw">do</span>
+  v<span class="ot">[</span>i<span class="ot">].</span>x<span class="ot">,</span> v<span class="ot">[</span>i <span class="ot">+</span> <span class="dv">1</span><span class="ot">].</span>x <span class="ot">=</span> random<span class="ot">.</span>normal<span class="ot">()</span>
+  v<span class="ot">[</span>i<span class="ot">].</span>y<span class="ot">,</span> v<span class="ot">[</span>i <span class="ot">+</span> <span class="dv">1</span><span class="ot">].</span>y <span class="ot">=</span> random<span class="ot">.</span>normal<span class="ot">()</span>
+  v<span class="ot">[</span>i<span class="ot">].</span>z<span class="ot">,</span> v<span class="ot">[</span>i <span class="ot">+</span> <span class="dv">1</span><span class="ot">].</span>z <span class="ot">=</span> random<span class="ot">.</span>normal<span class="ot">()</span>
+<span class="kw">end</span>
+queue:enqueue_unmap_mem_object<span class="ot">(</span>d_v<span class="ot">,</span> v<span class="ot">)</span></code></pre>
+<p>On a CPU, unmapping the buffer has no impact. On a discrete GPU, the contents of the buffer are copied to the device.</p>
+<p>With OpenCL a computation is partitioned into a given number of work items. Work items are arranged into work groups of a given work-group size. Work items that belong to the same work group may exchange data via local memory with low latency.</p>
+<p>For the parallel summation we choose work dimensions of powers of two:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> work_size <span class="ot">=</span> <span class="dv">128</span>
+<span class="kw">local</span> num_groups <span class="ot">=</span> <span class="dv">512</span>
+<span class="kw">local</span> glob_size <span class="ot">=</span> num_groups <span class="ot">*</span> work_size</code></pre>
+<p>The optimal work dimensions need to be determined by performing measurements of the run-time. Although the optimal work dimensions vary from device to device, modern GPUs for example have similar architectures with thousands of scalar cores, and a single set of work dimensions can yield close to optimal run-times across different GPUs.</p>
+<p>Each work item independently computes a partial sum, which reduces the number of summands from the number of molecules (1000000) to the global number of work items (65536). The partial sums are stored in local memory and gradually summed in a pairwise manner. At each step the number of work items that carry out an addition reduces by half, while the other work items idle.</p>
+<div class="figure">
+<img src="parallel_sum.svg" alt="Parallel summation of partially-summed velocities using 8 work items." /><p class="caption">Parallel summation of partially-summed velocities using 8 work items.</p>
+</div>
+<p>Note how in each step the collective memory accesses of work items within a group are contiguous. This linear pattern is generally the most efficient memory access pattern, whether accessing local memory of low latency or global memory of high latency.</p>
+<p>The OpenCL C kernel that sums the molecule velocities is included in the Lua program:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> temp <span class="ot">=</span> templet<span class="ot">.</span>loadstring<span class="st">[[</span>
+<span class="st">#ifndef CL_VERSION_1_2</span>
+<span class="st">#pragma OPENCL EXTENSION cl_khr_fp64 : enable</span>
+<span class="st">#endif</span>
+
+<span class="st">__kernel void sum(__global const double3 *restrict d_v,</span>
+<span class="st">                  __global double *restrict d_en)</span>
+<span class="st">{</span>
+<span class="st">  const long gid = get_global_id(0);</span>
+<span class="st">  const long lid = get_local_id(0);</span>
+<span class="st">  const long wid = get_group_id(0);</span>
+<span class="st">  __local double l_en[${work_size}];</span>
+
+<span class="st">  double en = 0;</span>
+<span class="st">  for (long i = gid; i &lt; ${N}; i += ${glob_size}) {</span>
+<span class="st">    en += dot(d_v[i], d_v[i]);</span>
+<span class="st">  }</span>
+<span class="st">  l_en[lid] = en;</span>
+<span class="st">  barrier(CLK_LOCAL_MEM_FENCE);</span>
+
+<span class="st">  |local i = work_size</span>
+<span class="st">  |while i &gt; 1 do</span>
+<span class="st">  |  i = i / 2</span>
+<span class="st">  if (lid &lt; ${i}) l_en[lid] += l_en[lid + ${i}];</span>
+<span class="st">  barrier(CLK_LOCAL_MEM_FENCE);</span>
+<span class="st">  |end</span>
+
+<span class="st">  if (lid == 0) d_en[wid] = l_en[0];</span>
+<span class="st">}</span>
+<span class="st">]]</span></code></pre>
+<p>The kernel code contains Lua expressions <code>${...}</code> and statements <code>|...</code>. Before compiling the kernel for the device, we preprocess the code with <a href="http://colberg.org/lua-templet">Templet</a> to substitute parameters such as the number of molecules <code>N</code> and unroll parallel summing.</p>
+<p>After template expansion the code for parallel summing becomes</p>
+<pre class="sourceCode c"><code class="sourceCode c">  <span class="kw">if</span> (lid &lt; <span class="dv">64</span>) l_en[lid] += l_en[lid + <span class="dv">64</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">32</span>) l_en[lid] += l_en[lid + <span class="dv">32</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">16</span>) l_en[lid] += l_en[lid + <span class="dv">16</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">8</span>) l_en[lid] += l_en[lid + <span class="dv">8</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">4</span>) l_en[lid] += l_en[lid + <span class="dv">4</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">2</span>) l_en[lid] += l_en[lid + <span class="dv">2</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);
+  <span class="kw">if</span> (lid &lt; <span class="dv">1</span>) l_en[lid] += l_en[lid + <span class="dv">1</span>];
+  barrier(CLK_LOCAL_MEM_FENCE);</code></pre>
+<p>Between each summation step the work items of a group are synchronized using a local-memory barrier that ensures a consistent state among work items of the contents of local memory after the barrier. Since the compiler knows exactly which work items are summing and which are idling, it is able to optimize away unneeded synchronization points. On GPUs, work items within groups of 64 or 32, depending on the vendor, operate in lock-step and do not require explicit synchronization.</p>
+<p>In the host program we preprocess and compile the OpenCL C source code:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> source <span class="ot">=</span> temp<span class="ot">({</span>N <span class="ot">=</span> N<span class="ot">,</span> work_size <span class="ot">=</span> work_size<span class="ot">,</span> glob_size <span class="ot">=</span> glob_size<span class="ot">})</span>
+<span class="kw">local</span> program <span class="ot">=</span> context:create_program_with_source<span class="ot">(</span>source<span class="ot">)</span>
+<span class="kw">local</span> status<span class="ot">,</span> err <span class="ot">=</span> <span class="fu">pcall</span><span class="ot">(</span><span class="kw">function</span><span class="ot">()</span> <span class="kw">return</span> program:build<span class="ot">()</span> <span class="kw">end</span><span class="ot">)</span>
+<span class="fu">io.stderr</span>:<span class="fu">write</span><span class="ot">(</span>program:get_build_info<span class="ot">(</span>device<span class="ot">,</span> <span class="st">&quot;log&quot;</span><span class="ot">))</span>
+<span class="kw">if</span> <span class="kw">not</span> status <span class="kw">then</span> <span class="fu">error</span><span class="ot">(</span>err<span class="ot">)</span> <span class="kw">end</span></code></pre>
+<p>The call to <code>program:build()</code> is wrapped with <a href="http://www.lua.org/manual/5.2/manual.html#pdf-pcall">pcall</a> to intercept a potential build failure and output compiler messages before raising an error. We are also interested in compiler messages if the program build succeeds, since it may contain non-fatal warnings that hint programming errors.</p>
+<p>Once the program is built we acquire and execute the <code>sum</code> kernel function:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> kernel <span class="ot">=</span> program:create_kernel<span class="ot">(</span><span class="st">&quot;sum&quot;</span><span class="ot">)</span>
+<span class="kw">local</span> d_en <span class="ot">=</span> context:create_buffer<span class="ot">(</span>num_groups <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_double&quot;</span><span class="ot">))</span>
+kernel:set_arg<span class="ot">(</span><span class="dv">0</span><span class="ot">,</span> d_v<span class="ot">)</span>
+kernel:set_arg<span class="ot">(</span><span class="dv">1</span><span class="ot">,</span> d_en<span class="ot">)</span>
+queue:enqueue_ndrange_kernel<span class="ot">(</span>kernel<span class="ot">,</span> <span class="kw">nil</span><span class="ot">,</span> <span class="ot">{</span>glob_size<span class="ot">},</span> <span class="ot">{</span>work_size<span class="ot">})</span></code></pre>
+<p>The kernel receives an input buffer with the velocities and an output buffer that stores the partial sum of each work group.</p>
+<p>Finally we map the buffer for reading on the host and compute the average kinetic energy per molecule.</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> sum <span class="ot">=</span> <span class="dv">0</span>
+<span class="kw">local</span> en <span class="ot">=</span> ffi<span class="ot">.</span>cast<span class="ot">(</span><span class="st">&quot;cl_double *&quot;</span><span class="ot">,</span> queue:enqueue_map_buffer<span class="ot">(</span>d_en<span class="ot">,</span> <span class="kw">true</span><span class="ot">,</span> <span class="st">&quot;read&quot;</span><span class="ot">,</span> <span class="dv">0</span><span class="ot">,</span> num_groups <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_double&quot;</span><span class="ot">)))</span>
+<span class="kw">for</span> i <span class="ot">=</span> <span class="dv">0</span><span class="ot">,</span> num_groups <span class="ot">-</span> <span class="dv">1</span> <span class="kw">do</span> sum <span class="ot">=</span> sum <span class="ot">+</span> en<span class="ot">[</span>i<span class="ot">]</span> <span class="kw">end</span>
+queue:enqueue_unmap_mem_object<span class="ot">(</span>d_en<span class="ot">,</span> en<span class="ot">)</span>
+<span class="fu">print</span><span class="ot">(</span><span class="dv">0.5</span> <span class="ot">*</span> sum <span class="ot">/</span> N<span class="ot">)</span></code></pre>
+<pre><code>1.4977721207647</code></pre>
+<p>The result is close to the exact energy of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mfrac><mn>3</mn><mn>2</mn></mfrac><msub><mi>k</mi><mtext mathvariant="normal">B</mtext></msub><mi>T</mi></mrow></math> within the error of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mfrac><mn>3</mn><mn>2</mn></mfrac><mo>/</mo><msqrt><mi>N</mi></msqrt><mo>≈</mo><mn>0</mn><mo>.</mo><mn>002</mn></mrow></math>.</p>
+</div>
+<div class="footer">
+&copy; Copyright 2013–2014, Peter Colberg.
+Created using <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+---
+title: Installing
+---
+
+
+Git
+---
+
+OpenCL for Lua for Lua is available from a [git repository]:
+
+~~~
+git clone http://git.colberg.org/lua-opencl
+~~~
+
+In the repository, checkout the latest release version:
+
+~~~
+git checkout 1.0.0
+~~~
+
+If you have GnuPG, verify that the tag is signed by the following key:
+
+~~~
+git tag -v 1.0.0
+~~~
+
+~~~
+Primary key fingerprint: 2997 6EC2 2BD1 EBBC CC77  F3A6 183B D5ED 3527 8611
+     Subkey fingerprint: 983B F9D0 F02A 6014 0CEC  529F 767E 12A8 C92A 31CB
+~~~
+
+The module is accompanied by a test suite:
+
+~~~
+make test
+~~~
+
+[git repository]: http://git.colberg.org/lua-opencl
+
+
+LuaRocks
+--------
+
+OpenCL for Lua for Lua is available from the default [LuaRocks mirror]:
+
+~~~
+luarocks install --local lua-opencl
+~~~
+
+You may wish to remove older versions before installing:
+
+~~~
+luarocks remove --local lua-opencl
+~~~
+
+To use the module, set the Lua module path in your shell's startup file:
+
+~~~
+eval `luarocks path`
+~~~
+
+If the LuaRocks mirror is not available, install from the git repository above:
+
+~~~
+luarocks install --local rockspec/lua-opencl-1.0.0-1.rockspec
+~~~
+
+To install the module directly from the git source, use:
+
+~~~
+luarocks make --local rockspec/lua-opencl-1.0.0-1.rockspec
+~~~
+
+In this case you must manually git checkout the corresponding version beforehand.
+
+[LuaRocks mirror]: http://luarocks.org/repositories/rocks/#lua-opencl
+
+
+FFI C bindings
+--------------
+
+OpenCL for Lua includes FFI C bindings that are compiled for the [Khronos
+OpenCL 2.0 headers]. If you wish to compile the FFI C bindings yourself,
+for example when packaging for a distribution, you need to install the
+[Lua plugin for GCC] and [cdecl for GCC].
+
+[Khronos OpenCL 2.0 headers]: http://www.khronos.org/registry/cl/
+
+To generate FFI C bindings using OpenCL 1.2 or later headers, run:
+
+~~~
+make -B opencl
+~~~
+
+This assumes that the Lua plugin for GCC is installed in the [GCC plugin
+directory].
+
+If the plugin is located in a different directory, override the make variable
+`GCCLUA`:
+
+~~~
+make -B opencl GCCLUA=${HOME}/projects/gcc-lua/gcc/gcclua.so
+~~~
+
+You may also specify the plugin directory in the environment variable
+`LD_LIBRARY_PATH`:
+
+~~~
+export LD_LIBRARY_PATH="${HOME}/projects/gcc-lua/gcc${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+~~~
+
+The plugin may then be loaded by passing its filename:
+
+~~~
+make -B opencl GCCLUA=gcclua.so
+~~~
+
+To override the default GCC C compiler `gcc`, set `CC`:
+
+~~~
+make -B opencl CC=gcc-4.7
+~~~
+
+If the OpenCL header files are not installed in a system path, set `CPATH`:
+
+~~~
+export CPATH=/opt/opencl-2.0/include:${HOME}/.luarocks/lib/luarocks/rocks/gcc-lua-cdecl/2.0.1-1/include
+~~~
+
+To override the name of the OpenCL library, set `LIBNAME`:
+
+~~~
+make -B opencl LIBNAME=libOpenCL.so.1
+~~~
+
+[Lua plugin for GCC]: http://colberg.org/gcc-lua/
+[cdecl for GCC]: http://colberg.org/gcc-lua-cdecl/
+[GCC plugin directory]: http://gcc.gnu.org/onlinedocs/gccint/Plugins-loading.html

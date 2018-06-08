@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Peter Colberg" />
+  <title>Mandelbrot set &mdash; OpenCL for Lua</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" href="pandoc.css" type="text/css" />
+  <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+<div class="header">
+<ul>
+<li><a href="index.html">OpenCL for Lua</a></li>
+<li><a href="INSTALL.html">Installing</a></li>
+<li><a href="README.html">User's Guide</a></li>
+<li><a href="mandelbrot.html">Examples</a></li>
+<li><a href="reference.html">Reference</a></li>
+<li><a href="https://lists.colberg.org/listinfo/lua-opencl">Mailing list</a></li>
+<li><a href="CHANGES.html">Releases</a></li>
+</ul>
+</div>
+<div class="body">
+<h1>Mandelbrot set</h1>
+<p>In this example we will compose an OpenCL program that calculates the <a href="https://en.wikipedia.org/wiki/Mandelbrot_set">Mandelbrot set</a>. The Mandelbrot set is the set of points <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>c</mi></mrow></math> in the complex plane for which the limit of the infinite recursion <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><msub><mi>z</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn></mrow></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><msub><mi>z</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>z</mi><mi>n</mi><mn>2</mn></msubsup><mo>+</mo><mi>c</mi></mrow></math> is bounded, i.e. <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">|</mo><msub><mi>z</mi><mi>n</mi></msub><mo stretchy="false">|</mo><mo>&lt;</mo><mo>∞</mo></mrow></math> as the number of recursions <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi><mo>→</mo><mo>∞</mo></mrow></math>.</p>
+<p>Since our computer time is finite, we limit the problem to a finite number of recursions <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi></mrow></math> and introduce an escape radius <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>R</mi></mrow></math>: if the distance of the point <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><msub><mi>z</mi><mi>n</mi></msub></mrow></math> from the origin <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">|</mo><msub><mi>z</mi><mi>n</mi></msub><mo stretchy="false">|</mo><mo>&gt;</mo><mi>R</mi></mrow></math> after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi><mo>&lt;</mo><mi>N</mi></mrow></math> recursions, the point <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>c</mi></mrow></math> is not in the Mandelbrot set; otherwise, if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">|</mo><msub><mi>z</mi><mi>n</mi></msub><mo stretchy="false">|</mo><mo>≤</mo><mi>R</mi></mrow></math> after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi><mo>=</mo><mi>N</mi></mrow></math> recursions, the point <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>c</mi></mrow></math> is in the Mandelbrot set. The calculation of the Mandelbrot set is a good example for a numerical algorithm that is trivial to parallelize, since the recursion can be carried out independently for each point.</p>
+<p>The figure shows the complex plane with points in the Mandelbrot set colored in black and points not in the Mandelbrot set colored according to the number of recursions <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi></mrow></math> before escaping <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>R</mi></mrow></math>, ranging from blue for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi><mo>=</mo><mn>0</mn></mrow></math> to red for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>n</mi><mo>=</mo><mi>N</mi><mo>−</mo><mn>1</mn></mrow></math>.</p>
+<div class="figure">
+<img src="mandelbrot.png" alt="Mandelbrot set for N = 25 (left) and N = 250 (right) with R = 100." /><p class="caption">Mandelbrot set for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi><mo>=</mo><mn>25</mn></mrow></math> (left) and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>N</mi><mo>=</mo><mn>250</mn></mrow></math> (right) with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>R</mi><mo>=</mo><mn>100</mn></mrow></math>.</p>
+</div>
+<p>After installing OpenCL for Lua and the <a href="http://colberg.org/lua-templet/">Templet</a> preprocessor, try running the program:</p>
+<pre><code>./mandelbrot.lua config.lua</code></pre>
+<p>This generates an image in the <a href="https://en.wikipedia.org/wiki/Netpbm_format">portable pixmap</a> format, which can be shown using</p>
+<pre><code>display mandelbrot.ppm</code></pre>
+<p>or converted to a compressed image format with</p>
+<pre><code>convert mandelbrot.ppm mandelbrot.png</code></pre>
+<p>We begin with the file <code>config.lua</code> that contains the parameters.</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="co">-- range of x = Re(z)</span>
+X <span class="ot">=</span> <span class="ot">{-</span><span class="dv">1.401155</span> <span class="ot">-</span> <span class="dv">0.75</span><span class="ot">,</span> <span class="ot">-</span><span class="dv">1.401155</span> <span class="ot">+</span> <span class="dv">2.25</span><span class="ot">}</span>
+<span class="co">-- range of y = Im(z)</span>
+Y <span class="ot">=</span> <span class="ot">{-</span><span class="dv">1.25</span><span class="ot">,</span> <span class="dv">1.25</span><span class="ot">}</span>
+<span class="co">-- number of horizontal pixels</span>
+Nx <span class="ot">=</span> <span class="dv">5120</span>
+<span class="co">-- number of vertical pixels</span>
+Ny <span class="ot">=</span> <span class="fu">math.ceil</span><span class="ot">(</span>Nx <span class="ot">*</span> <span class="ot">(</span>Y<span class="ot">[</span><span class="dv">2</span><span class="ot">]</span> <span class="ot">-</span> Y<span class="ot">[</span><span class="dv">1</span><span class="ot">])</span> <span class="ot">/</span> <span class="ot">(</span>X<span class="ot">[</span><span class="dv">2</span><span class="ot">]</span> <span class="ot">-</span> X<span class="ot">[</span><span class="dv">1</span><span class="ot">]))</span>
+<span class="co">-- number of recursions</span>
+N <span class="ot">=</span> <span class="dv">100</span>
+<span class="co">-- escape radius</span>
+R <span class="ot">=</span> <span class="dv">100</span>
+<span class="co">-- PPM image filename</span>
+output <span class="ot">=</span> <span class="st">&quot;mandelbrot_N&quot;</span> <span class="ot">..</span> N <span class="ot">..</span> <span class="st">&quot;.ppm&quot;</span>
+<span class="co">-- OpenCL platform</span>
+platform <span class="ot">=</span> <span class="dv">1</span>
+<span class="co">-- OpenCL device</span>
+device <span class="ot">=</span> <span class="dv">1</span></code></pre>
+<p>Since the configuration is itself written in Lua, we may derive parameters in place, such as the number of vertical pixels needed for a proportional image, or an output filename that denotes the number of recursions. The ranges in the complex plane are given as coordinate offsets to a <a href="https://en.wikipedia.org/wiki/Mandelbrot_set#Self-similarity">Feigenbaum point</a> of the Mandelbrot set, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>z</mi><mo>=</mo><mo stretchy="false">(</mo><mo>−</mo><mn>1</mn><mo>.</mo><mn>401155</mn><mo>…</mo><mo>,</mo><mn>0</mn><mo stretchy="false">)</mo></mrow></math>. To explore the <a href="https://en.wikipedia.org/wiki/Self-similar">self-similarity</a> of the Mandelbrot <a href="https://en.wikipedia.org/wiki/Fractal">fractal</a>, try zooming in around the Feigenbaum point by decreasing the offsets in <code>X</code> and <code>Y</code> while increasing <code>N</code>.</p>
+<p>We begin the program <code>mandelbrot.lua</code> by loading the configuration into a table.</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> config <span class="ot">=</span> <span class="fu">setmetatable</span><span class="ot">({},</span> <span class="ot">{</span>__index <span class="ot">=</span> _G<span class="ot">})</span>
+<span class="fu">loadfile</span><span class="ot">(</span>arg<span class="ot">[</span><span class="dv">1</span><span class="ot">],</span> <span class="kw">nil</span><span class="ot">,</span> config<span class="ot">)()</span></code></pre>
+<p>Setting the metatable of the table <code>config</code> to the global environment (<code>_G</code>) before invoking <code>loadfile</code> provides mathematical and other functions of the Lua standard library in the configuration.</p>
+<p>Next we load the OpenCL C source code that contains the calculation:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> template <span class="ot">=</span> templet<span class="ot">.</span>loadfile<span class="ot">(</span><span class="st">&quot;mandelbrot.cl&quot;</span><span class="ot">)</span>
+<span class="kw">local</span> source <span class="ot">=</span> template<span class="ot">(</span>config<span class="ot">)</span></code></pre>
+<p>The source code is parsed by the <a href="http://colberg.org/lua-templet/">Templet</a> preprocessor, which substitutes the parameters of the table <code>config</code> in the source code. We will see later how the use of a template preprocessor may improve the efficiency and the readability of an OpenCL program.</p>
+<p>The OpenCL environment is set up by selecting one of the available platforms, with each platform corresponding to a different OpenCL driver, selecting one of the devices available on that platform, and creating a context on that device.</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> platform <span class="ot">=</span> cl<span class="ot">.</span>get_platforms<span class="ot">()[</span>config<span class="ot">.</span>platform<span class="ot">]</span>
+<span class="kw">local</span> device <span class="ot">=</span> platform:get_devices<span class="ot">()[</span>config<span class="ot">.</span>device<span class="ot">]</span>
+<span class="kw">local</span> context <span class="ot">=</span> cl<span class="ot">.</span>create_context<span class="ot">({</span>device<span class="ot">})</span></code></pre>
+<p>Then we compile the OpenCL C source code to a binary program:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> program <span class="ot">=</span> context:create_program_with_source<span class="ot">(</span>source<span class="ot">)</span>
+<span class="kw">local</span> status<span class="ot">,</span> err <span class="ot">=</span> <span class="fu">pcall</span><span class="ot">(</span><span class="kw">function</span><span class="ot">()</span> <span class="kw">return</span> program:build<span class="ot">()</span> <span class="kw">end</span><span class="ot">)</span>
+<span class="fu">io.stderr</span>:<span class="fu">write</span><span class="ot">(</span>program:get_build_info<span class="ot">(</span>device<span class="ot">,</span> <span class="st">&quot;log&quot;</span><span class="ot">))</span>
+<span class="kw">if</span> <span class="kw">not</span> status <span class="kw">then</span> <span class="fu">error</span><span class="ot">(</span>err<span class="ot">)</span> <span class="kw">end</span></code></pre>
+<p>The function <code>program.build</code> is invoked using a protected call to be able to write the build log to the standard error output, before raising an error in case the build has failed. The build log is useful in any case, since it includes non-fatal warning messages.</p>
+<p>We allocate a memory buffer to store the Mandelbrot image:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> Nx<span class="ot">,</span> Ny <span class="ot">=</span> config<span class="ot">.</span>Nx<span class="ot">,</span> config<span class="ot">.</span>Ny
+<span class="kw">local</span> d_image <span class="ot">=</span> context:create_buffer<span class="ot">(</span>Nx <span class="ot">*</span> Ny <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_uchar3&quot;</span><span class="ot">))</span></code></pre>
+<p>The pixels of the image are represented as red-green-blue tuples (RGB), with each color intensity in the integer range 0 to 255. A pixel is stored as a 3-component vector of type <code>cl_uchar3</code>. Vector types are aligned to powers of two bytes in memory space for efficiency reasons; which means <code>cl_uchar3</code> is aligned to 4 bytes, and each pixel within the buffer is padded with an unused byte. This becomes important later when we save the image to a file.</p>
+<p>We create a kernel object for the device function <code>mandelbrot</code>:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> kernel <span class="ot">=</span> program:create_kernel<span class="ot">(</span><span class="st">&quot;mandelbrot&quot;</span><span class="ot">)</span>
+kernel:set_arg<span class="ot">(</span><span class="dv">0</span><span class="ot">,</span> d_image<span class="ot">)</span></code></pre>
+<p>The function receives the memory buffer as its sole argument; recall we substituted constant parameters earlier using the template preprocessor. For parameters that vary in time, kernel arguments may also be passed by value.</p>
+<p>To execute the device function we enqueue the kernel in a command queue:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> queue <span class="ot">=</span> context:create_command_queue<span class="ot">(</span>device<span class="ot">,</span> <span class="st">&quot;profiling&quot;</span><span class="ot">)</span>
+<span class="kw">local</span> event <span class="ot">=</span> queue:enqueue_ndrange_kernel<span class="ot">(</span>kernel<span class="ot">,</span> <span class="kw">nil</span><span class="ot">,</span> <span class="ot">{</span>Nx<span class="ot">,</span>  Ny<span class="ot">},</span> <span class="ot">{</span><span class="dv">64</span><span class="ot">,</span> <span class="dv">1</span><span class="ot">})</span></code></pre>
+<p>Queue functions are asynchronous or non-blocking with only few exceptions, i.e., the function that enqueues the command returns immediately while the command is executed in the background. Enqueued commands are executed in order by default. A queue function returns an event associated with the enqueued command, which other commands enqueued in different queues may depend on. Here we store the event associated with the kernel to later query its execution time.</p>
+<p>The <code>mandelbrot</code> kernel is executed on a two-dimensional grid of dimensions <code>{Nx, Ny}</code>, where each pixel of the image is mapped to one work item. Work items are divided into work groups, and the number of work items per work group can be specified explicitly. Work items that belong to the same work group may communicate via synchronization points and local memory.</p>
+<p>Next we map the memory buffer containing the image to a host pointer:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> image <span class="ot">=</span> ffi<span class="ot">.</span>cast<span class="ot">(</span><span class="st">&quot;cl_uchar3 *&quot;</span><span class="ot">,</span> queue:enqueue_map_buffer<span class="ot">(</span>d_image<span class="ot">,</span> <span class="kw">true</span><span class="ot">,</span> <span class="st">&quot;read&quot;</span><span class="ot">,</span> <span class="dv">0</span><span class="ot">,</span> Nx <span class="ot">*</span> Ny <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_uchar3&quot;</span><span class="ot">)))</span></code></pre>
+<p>By passing <strong>true</strong> as the second argument we specify that the map command is synchronous: the function will block until the data is available for reading on the host. The function returns a <code>void</code> pointer, which we cast to the vector type <code>cl_char3</code> to read the elements of the buffer.</p>
+<p>Mapping a buffer for reading and/or writing has the advantage that the data is only copied between the device and the host if needed; for instance the data need not be copied when the device and the host share the same memory, which is the case for a CPU device or an integrated GPU device.</p>
+<p>We output the image of the Mandelbrot set to a file:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> f <span class="ot">=</span> <span class="fu">io.open</span><span class="ot">(</span>config<span class="ot">.</span>output<span class="ot">,</span> <span class="st">&quot;w&quot;</span><span class="ot">)</span>
+f:<span class="fu">write</span><span class="ot">(</span><span class="st">&quot;P6</span><span class="ot">\n</span><span class="st">&quot;</span><span class="ot">,</span> Nx<span class="ot">,</span> <span class="st">&quot; &quot;</span><span class="ot">,</span> Ny<span class="ot">,</span> <span class="st">&quot;</span><span class="ot">\n</span><span class="st">&quot;</span><span class="ot">,</span> <span class="dv">255</span><span class="ot">,</span> <span class="st">&quot;</span><span class="ot">\n</span><span class="st">&quot;</span><span class="ot">)</span>
+<span class="kw">local</span> row <span class="ot">=</span> ffi<span class="ot">.</span>new<span class="ot">(</span><span class="st">&quot;struct { char r, g, b; }[?]&quot;</span><span class="ot">,</span> Nx<span class="ot">)</span>
+<span class="kw">for</span> py <span class="ot">=</span> <span class="dv">0</span><span class="ot">,</span> Ny <span class="ot">-</span> <span class="dv">1</span> <span class="kw">do</span>
+  <span class="kw">for</span> px <span class="ot">=</span> <span class="dv">0</span><span class="ot">,</span> Nx <span class="ot">-</span> <span class="dv">1</span> <span class="kw">do</span>
+    row<span class="ot">[</span>px<span class="ot">].</span>r <span class="ot">=</span> image<span class="ot">[</span>px <span class="ot">+</span> py <span class="ot">*</span> Nx<span class="ot">].</span>s0
+    row<span class="ot">[</span>px<span class="ot">].</span>g <span class="ot">=</span> image<span class="ot">[</span>px <span class="ot">+</span> py <span class="ot">*</span> Nx<span class="ot">].</span>s1
+    row<span class="ot">[</span>px<span class="ot">].</span>b <span class="ot">=</span> image<span class="ot">[</span>px <span class="ot">+</span> py <span class="ot">*</span> Nx<span class="ot">].</span>s2
+  <span class="kw">end</span>
+  f:<span class="fu">write</span><span class="ot">(</span>ffi<span class="ot">.</span>string<span class="ot">(</span>row<span class="ot">,</span> Nx <span class="ot">*</span> <span class="dv">3</span><span class="ot">))</span>
+<span class="kw">end</span>
+f:<span class="fu">close</span><span class="ot">()</span></code></pre>
+<p>Recall that <code>cl_char3</code> is aligned to 4 bytes, while the binary portable pixmap format requires pixels to be aligned to 3 bytes. For each row of pixels we copy the color intensities from the OpenCL buffer to an intermediate array before writing the row to the file.</p>
+<p>The buffer is unmapped after use:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua">queue:enqueue_unmap_mem_object<span class="ot">(</span>d_image<span class="ot">,</span> image<span class="ot">)</span></code></pre>
+<p>To measure the run-time of the kernel, we query the captured events:</p>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> start <span class="ot">=</span> event:get_profiling_info<span class="ot">(</span><span class="st">&quot;start&quot;</span><span class="ot">)</span>
+<span class="kw">local</span> stop <span class="ot">=</span> event:get_profiling_info<span class="ot">(</span><span class="st">&quot;end&quot;</span><span class="ot">)</span>
+<span class="fu">io.write</span><span class="ot">((</span><span class="st">&quot;%.4g s</span><span class="ot">\n</span><span class="st">&quot;</span><span class="ot">)</span>:<span class="fu">format</span><span class="ot">(</span><span class="fu">tonumber</span><span class="ot">(</span>stop <span class="ot">-</span> start<span class="ot">)</span> <span class="ot">*</span> <span class="dv">1e-9</span><span class="ot">))</span></code></pre>
+<p>The profiling times are returned in nano-seconds since an arbitrary reference time on the device. After calculating the interval between <strong>&quot;start&quot;</strong> and <strong>&quot;end&quot;</strong> times, which are <a href="http://luajit.org/ext_ffi_semantics.html#cdata_arith">64 bit integers</a>, we convert it to a Lua number and output the time in seconds.</p>
+<p>Finally we consider the OpenCL C code in the file <code>mandelbrot.cl</code>.</p>
+<pre class="sourceCode c"><code class="sourceCode c">__kernel <span class="dt">void</span> mandelbrot(__global uchar3 *<span class="dt">restrict</span> d_image)</code></pre>
+<p>The kernel receives the output buffer for the image as an argument. Note the element type is <code>uchar3</code> in the kernel code, while we used <code>cl_uchar3</code> in the host code above. OpenCL defines a comprehensive set of <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/scalarDataTypes.html">scalar</a> and <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/vectorDataTypes.html">vector</a> data types, where the types are used without a <code>cl_</code> prefix in the kernel code and with a <code>cl_</code> prefix in the host code. OpenCL data types maintain the same sizes across platforms, e.g., <code>cl_int</code> always has 32 bits and <code>cl_long</code> always has 64 bits.</p>
+<p>Kernel arguments for arrays should always include the pointer qualifier <code>restrict</code>, which hints the compiler that the memory of one array does not overlap with the memory of other arrays, i.e., the respective pointers do not <a href="https://en.wikipedia.org/wiki/Pointer_aliasing">alias</a>. This allows the compiler to generate efficient code, for instance reading an array element that is used multiple times only once.</p>
+<p>The kernel begins by querying the coordinates of the work item on the grid:</p>
+<pre class="sourceCode c"><code class="sourceCode c">  <span class="dt">const</span> uint px = get_global_id(<span class="dv">0</span>);
+  <span class="dt">const</span> uint py = get_global_id(<span class="dv">1</span>);
+  <span class="dt">const</span> <span class="dt">double</span> x0 = ${X[<span class="dv">1</span>]} + ${(X[<span class="dv">2</span>] - X[<span class="dv">1</span>]) / Nx} * px;
+  <span class="dt">const</span> <span class="dt">double</span> y0 = ${Y[<span class="dv">1</span>]} + ${(Y[<span class="dv">2</span>] - Y[<span class="dv">1</span>]) / Ny} * (${Ny - <span class="dv">1</span>} - py);</code></pre>
+<p>The coordinates <code>px</code> and <code>py</code> correspond to the horizontal and vertical pixel coordinate within the image, which are converted to the point <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>c</mi><mo>=</mo><mo stretchy="false">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>,</mo><msub><mi>y</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></math> in the complex plane. Here we make use of the template preprocessor to substitute the ranges in the complex plane and precompute the conversion factors. The expressions enclosed in <code>${...}</code> contain Lua code that is evaluated during template preprocessing.</p>
+<p>After template preprocessing the above kernel code may look as follows:</p>
+<pre class="sourceCode c"><code class="sourceCode c">  <span class="dt">const</span> uint px = get_global_id(<span class="dv">0</span>);
+  <span class="dt">const</span> uint py = get_global_id(<span class="dv">1</span>);
+  <span class="dt">const</span> <span class="dt">double</span> x0 = -<span class="fl">2.151155</span> + <span class="fl">0.0006</span> * px;
+  <span class="dt">const</span> <span class="dt">double</span> y0 = -<span class="fl">1.25</span> + <span class="fl">0.00059995200383969</span> * (<span class="dv">4166</span> - py);</code></pre>
+<p>The expanded code no longer contains any division, which is usually slower than multiplication. We avoid passing many constants as additional kernel arguments, or scattering the precomputation of constants in the host code. Besides yielding a compact kernel that aids the compiler with optimization, the code is closer to the mathematical formulation of the algorithm and becomes easier to understand and maintain.</p>
+<p>We proceed with the Mandelbrot recursion:</p>
+<pre class="sourceCode c"><code class="sourceCode c">  <span class="dt">double</span> x = <span class="dv">0</span>;
+  <span class="dt">double</span> y = <span class="dv">0</span>;
+  uchar3 rgb = (uchar3)(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>);
+  <span class="kw">for</span> (<span class="dt">int</span> n = <span class="dv">0</span>; n &lt; ${N}; ++n) {
+    <span class="dt">const</span> <span class="dt">double</span> x2 = x * x;
+    <span class="dt">const</span> <span class="dt">double</span> y2 = y * y;
+    <span class="dt">const</span> <span class="dt">float</span> r2 = x2 + y2;
+    <span class="kw">if</span> (r2 &gt; (<span class="dt">float</span>)(${R ^ <span class="dv">2</span>})) {
+      <span class="dt">const</span> <span class="dt">float</span> f = log2(log(r2) * (<span class="dt">float</span>)(${<span class="fl">0.5</span> / math.log(R)}));
+      <span class="dt">const</span> <span class="dt">float</span> s = (n + <span class="dv">1</span> - f) * (<span class="dt">float</span>)(${<span class="dv">1</span> / N});
+      rgb = colormap(s);
+      <span class="kw">break</span>;
+    }
+    y = <span class="dv">2</span> * x * y + y0;
+    x = x2 - y2 + x0;
+  }</code></pre>
+<p>If the point exceeds the escape radius <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>R</mi></mrow></math>, the number of recursions is converted to a color using <a href="https://en.wikipedia.org/wiki/Mandelbrot_set#Continuous_.28smooth.29_coloring">smooth coloring</a>, which avoids visible bands by converting the radius of the escaped point to a scale-invariant value in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></math> that is added to the recursion count. The fractional number of recursions is converted to an RGB tuple using the <code>colormap</code> function.</p>
+<pre class="sourceCode c"><code class="sourceCode c">uchar3 colormap(<span class="dt">float</span> s)
+{
+  <span class="dt">const</span> float3 t = s - (float3)(<span class="fl">0.75</span>, <span class="fl">0.5</span>, <span class="fl">0.25</span>);
+  <span class="dt">const</span> float3 c = (<span class="dt">float</span>)(${<span class="fl">1.5</span> * <span class="dv">256</span>}) - fabs(t) * (<span class="dt">float</span>)(${<span class="dv">4</span> * <span class="dv">256</span>});
+  <span class="kw">return</span> convert_uchar3_sat(c);
+}</code></pre>
+<p>Note that calls to device functions within a kernel are inlined by the compiler. The function takes a scalar intensity and returns an RGB tuple obtained from the superposition of linear segments of red, green, and blue. OpenCL provides vector algebra functions for vector types, which we use to derive the three color intensities. The <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/convert_T.html">conversion function</a> <code>convert_uchar3_sat</code> truncates each intensity to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mn>255</mn><mo stretchy="false">]</mo></mrow></math> before converting from floating point to 8 bit integer.</p>
+<p>The Mandelbrot code serves as an example for mixed-precision floating-point calculation. The recursion is evaluated in double precision to maintain numerical stability of the algorithm. For the color conversion we resort to single precision, which matches the accuracy of an RGB tuple. Note the pre-computed constants are enclosed in <code>(float)(...)</code>, which converts double-precision numbers generated by the template preprocessor to single precision.</p>
+<p>We end the kernel by storing the RGB tuple to the output buffer:</p>
+<pre class="sourceCode c"><code class="sourceCode c">  d_image[px + py * ${Nx}] = rgb;</code></pre>
+<p>Note how work items with consecutive coordinate <code>px</code> access global memory in a contiguous manner. The linear pattern allows the device to group the memory accesses of multiple work items into one collective memory access. Global memory may have a latency on the order of 1000 clock cycles; therefore it should be used as sparingly and efficiently as the algorithm allows.</p>
+</div>
+<div class="footer">
+&copy; Copyright 2013–2014, Peter Colberg.
+Created using <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.
+</div>
+</body>
+</html>
