@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- Test command queues.
--- Copyright © 2013–2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -117,34 +117,33 @@ table.insert(tests, function(device)
   local context = cl.create_context({device})
   local queue = context:create_command_queue(device)
   local N = 2 ^ 10
-  local d_buf1 = context:create_buffer(N * ffi.sizeof("cl_uint"))
-  local buf1 = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf1, true, "write", 0, N * ffi.sizeof("cl_uint")))
-  for i = 0, N - 1 do
-    buf1[i] = i + 1
-  end
-  queue:enqueue_unmap_mem_object(d_buf1, buf1)
-  local buf2 = ffi.new("cl_uint[?]", N)
-  queue:enqueue_read_buffer(d_buf1, true, 0, N * ffi.sizeof("cl_uint"), buf2)
-  for i = 0, N - 1 do
-    assert(buf2[i] == i + 1)
-  end
-end)
-
-table.insert(tests, function(device)
-  local context = cl.create_context({device})
-  local queue = context:create_command_queue(device)
-  local N = 2 ^ 10
+  local d_buf = context:create_buffer(N * ffi.sizeof("cl_uint"))
   local buf1 = ffi.new("cl_uint[?]", N)
+  local buf2 = ffi.new("cl_uint[?]", N)
   for i = 0, N - 1 do
     buf1[i] = i + 1
   end
-  local d_buf2 = context:create_buffer(N * ffi.sizeof("cl_uint"))
-  queue:enqueue_write_buffer(d_buf2, false, 0, N * ffi.sizeof("cl_uint"), buf1)
-  local buf2 = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf2, true, "read", 0, N * ffi.sizeof("cl_uint")))
+  queue:enqueue_write_buffer(d_buf, true, buf1)
+  queue:enqueue_read_buffer(d_buf, true, buf2)
   for i = 0, N - 1 do
     assert(buf2[i] == i + 1)
   end
-  queue:enqueue_unmap_mem_object(d_buf2, buf2)
+  queue:enqueue_write_buffer(d_buf, true, N / 2 * ffi.sizeof("cl_uint"), N / 2 * ffi.sizeof("cl_uint"), buf1)
+  queue:enqueue_read_buffer(d_buf, true, nil, nil, buf2)
+  for i = 0, N / 2 - 1 do
+    assert(buf2[i] == i + 1)
+  end
+  for i = N / 2, N - 1 do
+    assert(buf2[i] == i + 1 - N / 2)
+  end
+  queue:enqueue_write_buffer(d_buf, true, nil, nil, buf1)
+  queue:enqueue_read_buffer(d_buf, true, N / 2 * ffi.sizeof("cl_uint"), N / 2 * ffi.sizeof("cl_uint"), buf2)
+  for i = 0, N / 2 - 1 do
+    assert(buf2[i] == i + 1 + N / 2)
+  end
+  for i = N / 2, N - 1 do
+    assert(buf2[i] == i + 1 - N / 2)
+  end
 end)
 
 table.insert(tests, function(device)
@@ -165,6 +164,13 @@ table.insert(tests, function(device)
     assert(buf2[i] == N2 + i + 1)
   end
   queue:enqueue_unmap_mem_object(d_buf2, buf2)
+  local d_buf3 = context:create_buffer(N1 * ffi.sizeof("cl_uint"))
+  queue:enqueue_copy_buffer(d_buf1, d_buf3)
+  local buf3 = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf3, true, "read", 0, N1 * ffi.sizeof("cl_uint")))
+  for i = 0, N1 - 1 do
+    assert(buf3[i] == i + 1)
+  end
+  queue:enqueue_unmap_mem_object(d_buf3, buf3)
 end)
 
 table.insert(tests, function(device)
@@ -174,7 +180,7 @@ table.insert(tests, function(device)
   local N = 2 ^ 10
   local d_buf = context:create_buffer(N * ffi.sizeof("cl_uint"))
   local pattern = 0xfe654321
-  queue:enqueue_fill_buffer(d_buf, ffi.new("cl_uint[1]", pattern), ffi.sizeof("cl_uint"), 0, N * ffi.sizeof("cl_uint"))
+  queue:enqueue_fill_buffer(d_buf, ffi.new("cl_uint[1]", pattern), ffi.sizeof("cl_uint"))
   local buf = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf, true, "read", 0, N * ffi.sizeof("cl_uint")))
   for i = 0, N - 1 do
     assert(buf[i] == pattern)
@@ -251,6 +257,19 @@ table.insert(tests, function(device)
   local context = cl.create_context({device})
   local queue = context:create_command_queue(device)
   queue:enqueue_barrier()
+end)
+
+table.insert(tests, function(device)
+  local context = cl.create_context({device})
+  local queue1 = context:create_command_queue(device)
+  local queue2 = context:create_command_queue(device)
+  local N = 2 ^ 20
+  local d_buf1 = context:create_buffer(N)
+  local d_buf2 = context:create_buffer(N)
+  local event = queue1:enqueue_copy_buffer(d_buf1, d_buf2, 0, 0, N)
+  queue2:enqueue_wait_for_events({event})
+  queue2:finish()
+  assert(event:get_info("command_execution_status") == "complete")
 end)
 
 table.insert(tests, function(device)

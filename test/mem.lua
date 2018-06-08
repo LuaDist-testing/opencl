@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- Test memory objects.
--- Copyright © 2013–2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ table.insert(tests, function(device)
   local d_buf = context:create_buffer("copy_host_ptr", N * ffi.sizeof("cl_int"), buf)
   local flags = d_buf:get_info("flags")
   assert(flags.copy_host_ptr == true)
-  local ptr = ffi.cast("cl_int *", queue:enqueue_map_buffer(d_buf, true, "read", 0, N * ffi.sizeof("cl_int")))
+  local ptr = ffi.cast("cl_int *", queue:enqueue_map_buffer(d_buf, true, "read"))
   for i = 0, N - 1 do
     assert(ptr[i] == N - i)
   end

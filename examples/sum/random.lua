@@ -1,7 +1,7 @@
 #!/usr/bin/env luajit
 ------------------------------------------------------------------------------
 -- Random distributions.
--- Copyright © 2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 

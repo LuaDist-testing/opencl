@@ -1,8 +1,8 @@
-package = "lua-opencl"
-version = "1.0.0-1"
+package = "opencl"
+version = "scm-1"
 source = {
    url = "git://git.colberg.org/lua-opencl",
-   tag = "1.0.0",
+   branch = "master",
 }
 description = {
    summary = "OpenCL for Lua",
@@ -18,7 +18,6 @@ description = {
 }
 build = {
    type = "make",
-   build_target = "test",
    build_variables = {
       LUA = "$(LUA)",
    },

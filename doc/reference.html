@@ -356,7 +356,7 @@
 <p>For <code>__global</code> or <code>__constant</code> arguments, <code>value</code> is a memory object, or <strong>nil</strong>.</p>
 <p>For arguments of type <code>sampler_t</code>, <code>value</code> specifies a sampler object.</p>
 <p>For <code>__local</code> arguments, <code>size</code> specifies the amount of local memory in bytes.</p>
-<p>For other arguments, <code>value</code> is a pointer to a buffer of <code>size</code> bytes.</p>
+<p>For other arguments, <code>value</code> is a non-scalar C data object that contains <code>size</code> bytes.</p>
 </dd>
 <dt><code>kernel:get_info(name)</code></dt>
 <dd><p>Queries information about the kernel.</p>
@@ -436,8 +436,8 @@
 <p><code>local_size</code> is a sequences that specifies the number of work items per work-group for each dimension; or <strong>nil</strong>, in which case the work-group size is chosen by the implementation.</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
-<dt><code>queue:enqueue_map_buffer(buffer, blocking, flags, offset, size[, events])</code></dt>
-<dd><p>Enqueues a command that maps a region from a buffer object into host memory, and returns a pointer to the mapped memory region and an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command maps the buffer region specified by <code>offset</code> and <code>size</code> in bytes.</p>
+<dt><code>queue:enqueue_map_buffer(buffer, blocking, flags[, offset, size[, events]])</code></dt>
+<dd><p>Enqueues a command that maps a region from a buffer object into host memory, and returns a pointer to the mapped memory region and an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command maps the buffer region specified by <code>offset</code> and <code>size</code> in bytes (default values are <strong>0</strong> and the size of the buffer).</p>
 <p><code>flags</code> can be one or a sequence of the following:</p>
 <ul>
 <li><strong>&quot;read&quot;</strong>: the buffer region is mapped for reading;</li>
@@ -447,23 +447,23 @@
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
 <dt><code>queue:enqueue_unmap_mem_object(mem, ptr[, events])</code></dt>
-<dd><p>Enqueues a command that unmaps a mapped memory region for the given memory object.</p>
+<dd><p>Enqueues a command that unmaps a mapped memory region for the given memory object, and returns an event object for the command.</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
-<dt><code>queue:enqueue_read_buffer(buffer, blocking, offset, size, ptr[, events])</code></dt>
-<dd><p>Enqueues a command that reads from a buffer object to host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command reads from the buffer region specified by <code>offset</code> and <code>size</code> in bytes. The command writes to the host memory region specified by <code>ptr</code>.</p>
+<dt><code>queue:enqueue_read_buffer(buffer, blocking, [offset, size,] ptr[, events])</code></dt>
+<dd><p>Enqueues a command that reads from a buffer object to host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command reads from the buffer region specified by <code>offset</code> and <code>size</code> in bytes (default values are <strong>0</strong> and the size of the buffer). The command writes to the host memory region specified by <code>ptr</code>.</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
-<dt><code>queue:enqueue_write_buffer(buffer, blocking, offset, size, ptr[, events])</code></dt>
-<dd><p>Enqueues a command that writes to a buffer object from host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command writes to the buffer region specified by <code>offset</code> and <code>size</code> in bytes. The command reads from the host memory region specified by <code>ptr</code>.</p>
+<dt><code>queue:enqueue_write_buffer(buffer, blocking, [offset, size,] ptr[, events])</code></dt>
+<dd><p>Enqueues a command that writes to a buffer object from host memory, and returns an event object for the command. If <code>blocking</code> is <strong>true</strong>, the function waits for the command to complete; otherwise, if <strong>false</strong>, the function returns immediately. The command writes to the buffer region specified by <code>offset</code> and <code>size</code> in bytes (default values are <strong>0</strong> and the size of the buffer). The command reads from the host memory region specified by <code>ptr</code>.</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
-<dt><code>queue:enqueue_copy_buffer(src_buffer, dst_buffer, src_offset, dst_offset, size[, events])</code></dt>
-<dd><p>Enqueues a command that copies from a source buffer to a destination buffer, and returns an event object for the command. The command copies <code>size</code> bytes from the source buffer region specified by <code>src_offset</code> in bytes to the destination buffer region specified by <code>dst_offset</code> in bytes.</p>
+<dt><code>queue:enqueue_copy_buffer(src_buffer, dst_buffer[, src_offset, dst_offset, size[, events]])</code></dt>
+<dd><p>Enqueues a command that copies from a source buffer to a destination buffer, and returns an event object for the command. The command copies <code>size</code> bytes from the source buffer region specified by <code>src_offset</code> in bytes to the destination buffer region specified by <code>dst_offset</code> in bytes (default values are <strong>0</strong> for <code>src_offset</code> and <code>dst_offset</code>, and the size of the source buffer for <code>size</code>).</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 </dd>
-<dt><code>queue:enqueue_fill_buffer(buffer, pattern, pattern_size, offset, size[, events])</code></dt>
-<dd><p>Enqueues a command that fills a buffer with a constant value, and returns an event object for the command. The command reads <code>pattern_size</code> bytes from the buffer pointed to by <code>pattern</code>, and fills the buffer region specified by <code>offset</code> and <code>size</code> in bytes, where <code>size</code> must be a multiple of <code>pattern_size</code>.</p>
+<dt><code>queue:enqueue_fill_buffer(buffer, pattern, pattern_size[, offset, size[, events]])</code></dt>
+<dd><p>Enqueues a command that fills a buffer with a constant value, and returns an event object for the command. The command reads <code>pattern_size</code> bytes from the buffer pointed to by <code>pattern</code>, and fills the buffer region specified by <code>offset</code> and <code>size</code> in bytes (default values are <strong>0</strong> and the size of the buffer), where <code>offset</code> and <code>size</code> must be multiples of <code>pattern_size</code>.</p>
 <p>If <code>events</code> is specified, the command is executed after the given events have completed.</p>
 <p><em>This function is available with OpenCL 1.2.</em></p>
 </dd>
@@ -482,6 +482,11 @@
 </dd>
 <dt><code>queue:enqueue_barrier()</code></dt>
 <dd><p>Enqueues a command that for all previously enqueued commands to complete.</p>
+<p>The command blocks execution of all subsequently enqueued commands.</p>
+<p><em>This function has been deprecated in OpenCL 1.2.</em></p>
+</dd>
+<dt><code>queue:enqueue_wait_for_events(events)</code></dt>
+<dd><p>Enqueues a command that waits for the given events to complete.</p>
 <p>The command blocks execution of all subsequently enqueued commands.</p>
 <p><em>This function has been deprecated in OpenCL 1.2.</em></p>
 </dd>
@@ -527,7 +532,7 @@
 </dl>
 </div>
 <div class="footer">
-&copy; Copyright 2013–2014, Peter Colberg.
+&copy; Copyright 2013–2015, Peter Colberg.
 Created using <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.
 </div>
 </body>

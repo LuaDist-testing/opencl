@@ -1,17 +1,9 @@
--- This file was automatically generated for the LuaDist project.
-
 package = "opencl"
 version = "1.1.0-1"
--- LuaDist source
 source = {
-  tag = "1.1.0-1",
-  url = "git://github.com/LuaDist-testing/opencl.git"
+   url = "git://git.colberg.org/lua-opencl",
+   tag = "1.1.0",
 }
--- Original source
--- source = {
---    url = "git://git.colberg.org/lua-opencl",
---    tag = "1.1.0",
--- }
 description = {
    summary = "OpenCL for Lua",
    detailed = [[

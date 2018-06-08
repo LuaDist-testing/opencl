@@ -1,7 +1,7 @@
 #!/usr/bin/env luajit
 ------------------------------------------------------------------------------
 -- Mandelbrot set.
--- Copyright © 2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ kernel:set_arg(0, d_image)
 local queue = context:create_command_queue(device, "profiling")
 local event = queue:enqueue_ndrange_kernel(kernel, nil, {Nx,  Ny}, {64, 1})
 
-local image = ffi.cast("cl_uchar3 *", queue:enqueue_map_buffer(d_image, true, "read", 0, Nx * Ny * ffi.sizeof("cl_uchar3")))
+local image = ffi.cast("cl_uchar3 *", queue:enqueue_map_buffer(d_image, true, "read"))
 local f = io.open(config.output, "w")
 f:write("P6\n", Nx, " ", Ny, "\n", 255, "\n")
 local row = ffi.new("struct { char r, g, b; }[?]", Nx)

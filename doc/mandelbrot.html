@@ -107,7 +107,7 @@ kernel:set_arg<span class="ot">(</span><span class="dv">0</span><span class="ot"
 <p>Queue functions are asynchronous or non-blocking with only few exceptions, i.e., the function that enqueues the command returns immediately while the command is executed in the background. Enqueued commands are executed in order by default. A queue function returns an event associated with the enqueued command, which other commands enqueued in different queues may depend on. Here we store the event associated with the kernel to later query its execution time.</p>
 <p>The <code>mandelbrot</code> kernel is executed on a two-dimensional grid of dimensions <code>{Nx, Ny}</code>, where each pixel of the image is mapped to one work item. Work items are divided into work groups, and the number of work items per work group can be specified explicitly. Work items that belong to the same work group may communicate via synchronization points and local memory.</p>
 <p>Next we map the memory buffer containing the image to a host pointer:</p>
-<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> image <span class="ot">=</span> ffi<span class="ot">.</span>cast<span class="ot">(</span><span class="st">&quot;cl_uchar3 *&quot;</span><span class="ot">,</span> queue:enqueue_map_buffer<span class="ot">(</span>d_image<span class="ot">,</span> <span class="kw">true</span><span class="ot">,</span> <span class="st">&quot;read&quot;</span><span class="ot">,</span> <span class="dv">0</span><span class="ot">,</span> Nx <span class="ot">*</span> Ny <span class="ot">*</span> ffi<span class="ot">.</span>sizeof<span class="ot">(</span><span class="st">&quot;cl_uchar3&quot;</span><span class="ot">)))</span></code></pre>
+<pre class="sourceCode lua"><code class="sourceCode lua"><span class="kw">local</span> image <span class="ot">=</span> ffi<span class="ot">.</span>cast<span class="ot">(</span><span class="st">&quot;cl_uchar3 *&quot;</span><span class="ot">,</span> queue:enqueue_map_buffer<span class="ot">(</span>d_image<span class="ot">,</span> <span class="kw">true</span><span class="ot">,</span> <span class="st">&quot;read&quot;</span><span class="ot">))</span></code></pre>
 <p>By passing <strong>true</strong> as the second argument we specify that the map command is synchronous: the function will block until the data is available for reading on the host. The function returns a <code>void</code> pointer, which we cast to the vector type <code>cl_char3</code> to read the elements of the buffer.</p>
 <p>Mapping a buffer for reading and/or writing has the advantage that the data is only copied between the device and the host if needed; for instance the data need not be copied when the device and the host share the same memory, which is the case for a CPU device or an integrated GPU device.</p>
 <p>We output the image of the Mandelbrot set to a file:</p>
@@ -178,7 +178,7 @@ f:<span class="fu">close</span><span class="ot">()</span></code></pre>
 <p>Note how work items with consecutive coordinate <code>px</code> access global memory in a contiguous manner. The linear pattern allows the device to group the memory accesses of multiple work items into one collective memory access. Global memory may have a latency on the order of 1000 clock cycles; therefore it should be used as sparingly and efficiently as the algorithm allows.</p>
 </div>
 <div class="footer">
-&copy; Copyright 2013–2014, Peter Colberg.
+&copy; Copyright 2013–2015, Peter Colberg.
 Created using <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.
 </div>
 </body>

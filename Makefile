@@ -1,6 +1,6 @@
 #
 # OpenCL for Lua.
-# Copyright © 2013–2014 Peter Colberg.
+# Copyright © 2013–2015 Peter Colberg.
 # Distributed under the MIT license. (See accompanying file LICENSE.)
 #
 
@@ -20,16 +20,7 @@ FILES_EXAMPLES_MANDELBROT_X = mandelbrot.lua
 FILES_EXAMPLES_SUM_F = random.lua
 FILES_EXAMPLES_SUM_X = sum.lua
 
-all: opencl doc
-
-opencl:
-	@$(MAKE) -C opencl
-
-test:
-	@$(MAKE) -C test
-
-doc:
-	@$(MAKE) -C doc
+all: test
 
 install:
 	$(INSTALL_D) $(DESTDIR)$(LUADIR)/opencl
@@ -44,8 +35,11 @@ install:
 	cd examples/sum && $(INSTALL_X) $(FILES_EXAMPLES_SUM_X) $(DESTDIR)$(DOCDIR)/examples/sum
 
 clean:
-	@$(MAKE) -C opencl clean
 	@$(MAKE) -C test clean
-	@$(MAKE) -C doc clean
 
-.PHONY: opencl test doc install clean
+SUBDIRS = test doc
+
+.PHONY: $(SUBDIRS)
+
+$(SUBDIRS):
+	@$(MAKE) -C $@

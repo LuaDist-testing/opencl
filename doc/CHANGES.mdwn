@@ -9,6 +9,16 @@ The version numbers follow [semantic versioning].
 [semantic versioning]: http://semver.org/spec/v2.0.0.html
 
 
+## lua‑opencl 1.2.0 (2015-04-24) {#v1.2.0}
+
+  * Add method to enqueue a wait for events.
+  * Map/fill/read/write/copy entire buffer if offset and size are unspecified.
+  * Fix test suite for device without FP64 arithmetic.
+  * Use static FFI C bindings instead of compiling with Lua plugin for GCC.
+  * Fix double finalization of event objects when querying profiling info.
+  * Fix test suite with Intel MIC.
+  * Allow passing kernel argument by value without specifying size.
+
 ## lua‑opencl 1.1.0 (2014-09-23) {#v1.1.0}
 
   * Fix test suite on OS X.

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- OpenCL for Lua.
--- Copyright © 2013–2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -194,12 +194,6 @@ function _M.get_platforms()
   return platforms
 end
 
-local function get_info(obj_info)
-  return function(obj, name)
-    return obj_info[name](obj)
-  end
-end
-
 do
   local function get_platform_info_string(name)
     return function(platform)
@@ -215,13 +209,17 @@ do
     end
   end
 
-  platform.get_info = get_info({
+  local platform_info = {
     profile    = get_platform_info_string(C.CL_PLATFORM_PROFILE),
     version    = get_platform_info_string(C.CL_PLATFORM_VERSION),
     name       = get_platform_info_string(C.CL_PLATFORM_NAME),
     vendor     = get_platform_info_string(C.CL_PLATFORM_VENDOR),
     extensions = get_platform_info_string(C.CL_PLATFORM_EXTENSIONS),
-  })
+  }
+
+  function platform.get_info(platform, name)
+    return platform_info[name](platform)
+  end
 end
 
 do
@@ -507,7 +505,7 @@ do
     return partition_property_value[tonumber(value[0])](value)
   end
 
-  device.get_info = get_info({
+  local device_info = {
     address_bits                  = get_device_info_uint(C.CL_DEVICE_ADDRESS_BITS),
     available                     = get_device_info_bool(C.CL_DEVICE_AVAILABLE),
     built_in_kernels              = get_device_info_string(C.CL_DEVICE_BUILT_IN_KERNELS),
@@ -581,7 +579,11 @@ do
     vendor_id                     = get_device_info_uint(C.CL_DEVICE_VENDOR_ID),
     version                       = get_device_info_string(C.CL_DEVICE_VERSION),
     driver_version                = get_device_info_string(C.CL_DRIVER_VERSION),
-  })
+  }
+
+  function device.get_info(device, name)
+    return device_info[name](device)
+  end
 end
 
 local function release_device(device)
@@ -689,10 +691,14 @@ do
     return devices
   end
 
-  context.get_info = get_info({
+  local context_info = {
     num_devices     = get_context_object_info_uint(C.CL_CONTEXT_NUM_DEVICES),
     devices         = get_context_info_devices,
-  })
+  }
+
+  function context.get_info(context, name)
+    return context_info[name](context)
+  end
 end
 
 local function release_mem_object(mem)
@@ -839,7 +845,7 @@ do
     return tonumber(value[0])
   end
 
-  mem.get_info = get_info({
+  local mem_info = {
     type                 = get_mem_object_info_type,
     flags                = get_mem_object_info_flags,
     size                 = get_mem_object_info_size,
@@ -848,7 +854,11 @@ do
     context              = get_mem_object_info_context,
     associated_memobject = get_mem_object_info_associated_memobject,
     offset               = get_mem_object_info_offset,
-  })
+  }
+
+  function mem.get_info(mem, name)
+    return mem_info[name](mem)
+  end
 end
 
 local function release_program(program)
@@ -972,7 +982,7 @@ do
     return tonumber(value[0])
   end
 
-  program.get_info = get_info({
+  local program_info = {
     context         = get_program_info_context,
     num_devices     = get_program_info_uint(C.CL_PROGRAM_NUM_DEVICES),
     devices         = get_program_info_devices,
@@ -981,13 +991,10 @@ do
     binaries        = get_program_info_binaries,
     num_kernels     = get_program_info_num_kernels,
     kernel_names    = get_program_info_string(C.CL_PROGRAM_KERNEL_NAMES),
-  })
-end
+  }
 
-local function get_info_device(obj_info)
-  return function(obj, device, name)
-    if name == nil then device, name = nil, device end
-    return obj_info[name](obj, device)
+  function program.get_info(program, name)
+    return program_info[name](program)
   end
 end
 
@@ -1036,12 +1043,16 @@ do
     return binary_type[value[0]]
   end
 
-  program.get_build_info = get_info_device({
+  local program_build_info = {
     status       = get_program_build_info_status,
     log          = get_program_build_info_string(C.CL_PROGRAM_BUILD_LOG),
     options      = get_program_build_info_string(C.CL_PROGRAM_BUILD_OPTIONS),
     binary_type  = get_program_build_info_binary_type,
-  })
+  }
+
+  function program.get_build_info(program, device, name)
+    return program_build_info[name](program, device)
+  end
 end
 
 local function release_kernel(kernel)
@@ -1071,6 +1082,7 @@ end
 function kernel.set_arg(kernel, index, size, value)
   if ffi.istype(cl_mem, size) then size, value = ffi.sizeof(cl_mem), cl_mem_1(size) end
   if ffi.istype(cl_sampler, size) then size, value = ffi.sizeof(cl_sampler), cl_sampler_1(size) end
+  if type(size) == "cdata" then size, value = ffi.sizeof(size), size end
   if size == nil then size = ffi.sizeof(cl_mem) end
   local status = C.clSetKernelArg(kernel, index, size, value)
   if status ~= C.CL_SUCCESS then return error(errors[status]) end
@@ -1134,13 +1146,17 @@ do
     return bittobool(tonumber(value[0]), type_qualifier)
   end
 
-  kernel.get_arg_info = get_info_device({
+  local kernel_arg_info = {
     address_qualifier = get_kernel_arg_info_address_qualifier,
     access_qualifier  = get_kernel_arg_info_access_qualifier,
     type_name         = get_kernel_arg_info_string(C.CL_KERNEL_ARG_TYPE_NAME),
     type_qualifier    = get_kernel_arg_info_arg_type_qualifier,
     name              = get_kernel_arg_info_string(C.CL_KERNEL_ARG_NAME),
-  })
+  }
+
+  function kernel.get_arg_info(kernel, index, name)
+    return kernel_arg_info[name](kernel, index)
+  end
 end
 
 do
@@ -1180,14 +1196,19 @@ do
     end
   end
 
-  kernel.get_work_group_info = get_info_device({
+  local kernel_work_group_info = {
     global_work_size                   = get_kernel_work_group_info_sizes(C.CL_KERNEL_GLOBAL_WORK_SIZE),
     work_group_size                    = get_kernel_work_group_info_size(C.CL_KERNEL_WORK_GROUP_SIZE),
     compile_work_group_size            = get_kernel_work_group_info_sizes(C.CL_KERNEL_COMPILE_WORK_GROUP_SIZE),
     local_mem_size                     = get_kernel_work_group_info_ulong(C.CL_KERNEL_LOCAL_MEM_SIZE),
     preferred_work_group_size_multiple = get_kernel_work_group_info_size(C.CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE),
     private_mem_size                   = get_kernel_work_group_info_ulong(C.CL_KERNEL_PRIVATE_MEM_SIZE),
-  })
+  }
+
+  function kernel.get_work_group_info(kernel, device, name)
+    if name == nil then device, name = nil, device end
+    return kernel_work_group_info[name](kernel, device)
+  end
 end
 
 do
@@ -1231,13 +1252,17 @@ do
     return retain_program(value[0])
   end
 
-  kernel.get_info = get_info({
+  local kernel_info = {
     function_name   = get_kernel_info_string(C.CL_KERNEL_FUNCTION_NAME),
     num_args        = get_kernel_info_uint(C.CL_KERNEL_NUM_ARGS),
     context         = get_kernel_info_context,
     program         = get_kernel_info_program,
     attributes      = get_kernel_info_string(C.CL_KERNEL_ATTRIBUTES),
-  })
+  }
+
+  function kernel.get_info(kernel, name)
+    return kernel_info[name](kernel)
+  end
 end
 
 local function release_command_queue(queue)
@@ -1296,11 +1321,15 @@ do
     return bittobool(tonumber(value[0]), command_queue_properties)
   end
 
-  queue.get_info = get_info({
+  local queue_info = {
     context         = get_command_queue_info_context,
     device          = get_command_queue_info_device,
     properties      = get_command_queue_info_properties,
-  })
+  }
+
+  function queue.get_info(queue, name)
+    return queue_info[name](queue)
+  end
 end
 
 local function release_event(event)
@@ -1329,6 +1358,7 @@ do
   }
 
   function queue.enqueue_map_buffer(queue, buffer, blocking, flags, offset, size, events)
+    if offset == nil and size == nil then offset, size = 0, buffer:get_info("size") end
     flags = strtobit(flags, map_buffer_flags)
     local num_events = events ~= nil and #events or 0
     if events ~= nil then events = cl_event_n(num_events, events) end
@@ -1350,6 +1380,8 @@ function queue.enqueue_unmap_mem_object(queue, mem, ptr, events)
 end
 
 function queue.enqueue_read_buffer(queue, buffer, blocking, offset, size, ptr, events)
+  if ptr == nil then offset, size, ptr, events = nil, nil, offset, size end
+  if offset == nil and size == nil then offset, size = 0, buffer:get_info("size") end
   local num_events = events ~= nil and #events or 0
   if events ~= nil then events = cl_event_n(num_events, events) end
   local event = cl_event_1()
@@ -1359,6 +1391,8 @@ function queue.enqueue_read_buffer(queue, buffer, blocking, offset, size, ptr, e
 end
 
 function queue.enqueue_write_buffer(queue, buffer, blocking, offset, size, ptr, events)
+  if ptr == nil then offset, size, ptr, events = nil, nil, offset, size end
+  if offset == nil and size == nil then offset, size = 0, buffer:get_info("size") end
   local num_events = events ~= nil and #events or 0
   if events ~= nil then events = cl_event_n(num_events, events) end
   local event = cl_event_1()
@@ -1368,6 +1402,7 @@ function queue.enqueue_write_buffer(queue, buffer, blocking, offset, size, ptr, 
 end
 
 function queue.enqueue_copy_buffer(queue, src_buffer, dst_buffer, src_offset, dst_offset, size, events)
+  if src_offset == nil and dst_offset == nil and size == nil then src_offset, dst_offset, size = 0, 0, src_buffer:get_info("size") end
   local num_events = events ~= nil and #events or 0
   if events ~= nil then events = cl_event_n(num_events, events) end
   local event = cl_event_1()
@@ -1377,6 +1412,7 @@ function queue.enqueue_copy_buffer(queue, src_buffer, dst_buffer, src_offset, ds
 end
 
 function queue.enqueue_fill_buffer(queue, buffer, pattern, pattern_size, offset, size, events)
+  if offset == nil and size == nil then offset, size = 0, buffer:get_info("size") end
   local num_events = events ~= nil and #events or 0
   if events ~= nil then events = cl_event_n(num_events, events) end
   local event = cl_event_1()
@@ -1412,6 +1448,13 @@ end
 
 function queue.enqueue_barrier(queue)
   local status = C.clEnqueueBarrier(queue)
+  if status ~= C.CL_SUCCESS then return error(errors[status]) end
+end
+
+function queue.enqueue_wait_for_events(queue, events)
+  local num_events = #events
+  events = cl_event_n(num_events, events)
+  local status = C.clEnqueueWaitForEvents(queue, num_events, events)
   if status ~= C.CL_SUCCESS then return error(errors[status]) end
 end
 
@@ -1496,12 +1539,16 @@ do
     return command_execution_status[value[0]]
   end
 
-  event.get_info = get_info({
+  local event_info = {
     command_queue            = get_event_info_command_queue,
     context                  = get_event_info_context,
     command_type             = get_event_info_command_type,
     command_execution_status = get_event_info_command_execution_status,
-  })
+  }
+
+  function event.get_info(event, name)
+    return event_info[name](event)
+  end
 end
 
 do
@@ -1515,12 +1562,16 @@ do
     end
   end
 
-  event.get_profiling_info = get_info({
+  local event_profiling_info = {
     queued  = get_event_profiling_info(C.CL_PROFILING_COMMAND_QUEUED),
     submit  = get_event_profiling_info(C.CL_PROFILING_COMMAND_SUBMIT),
     start   = get_event_profiling_info(C.CL_PROFILING_COMMAND_START),
     ["end"] = get_event_profiling_info(C.CL_PROFILING_COMMAND_END),
-  })
+  }
+
+  function event.get_profiling_info(event, name)
+    return event_profiling_info[name](event)
+  end
 end
 
 ffi.metatype("struct _cl_platform_id",   {__index = platform})

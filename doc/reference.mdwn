@@ -329,7 +329,7 @@ Kernels
 
     For `__local` arguments, `size` specifies the amount of local memory in bytes.
 
-    For other arguments, `value` is a pointer to a buffer of `size` bytes.
+    For other arguments, `value` is a non-scalar C data object that contains `size` bytes.
 
 `kernel:get_info(name)`
 
@@ -425,13 +425,14 @@ Command Queues
     If `events` is specified, the command is executed after the given events
     have completed.
 
-`queue:enqueue_map_buffer(buffer, blocking, flags, offset, size[, events])`
+`queue:enqueue_map_buffer(buffer, blocking, flags[, offset, size[, events]])`
 
   : Enqueues a command that maps a region from a buffer object into host memory,
     and returns a pointer to the mapped memory region and an event object for the
     command. If `blocking` is **true**, the function waits for the command to
     complete; otherwise, if **false**, the function returns immediately. The
-    command maps the buffer region specified by `offset` and `size` in bytes.
+    command maps the buffer region specified by `offset` and `size` in bytes
+    (default values are **0** and the size of the buffer).
 
     `flags` can be one or a sequence of the following:
 
@@ -445,52 +446,57 @@ Command Queues
 `queue:enqueue_unmap_mem_object(mem, ptr[, events])`
 
   : Enqueues a command that unmaps a mapped memory region for the given memory
-    object.
+    object, and returns an event object for the command.
 
     If `events` is specified, the command is executed after the given events
     have completed.
 
-`queue:enqueue_read_buffer(buffer, blocking, offset, size, ptr[, events])`
+`queue:enqueue_read_buffer(buffer, blocking, [offset, size,] ptr[, events])`
 
   : Enqueues a command that reads from a buffer object to host memory, and
     returns an event object for the command. If `blocking` is **true**, the
     function waits for the command to complete; otherwise, if **false**, the
     function returns immediately. The command reads from the buffer region
-    specified by `offset` and `size` in bytes. The command writes to the host
-    memory region specified by `ptr`.
+    specified by `offset` and `size` in bytes (default values are **0** and
+    the size of the buffer). The command writes to the host memory region
+    specified by `ptr`.
 
     If `events` is specified, the command is executed after the given events
     have completed.
 
-`queue:enqueue_write_buffer(buffer, blocking, offset, size, ptr[, events])`
+`queue:enqueue_write_buffer(buffer, blocking, [offset, size,] ptr[, events])`
 
   : Enqueues a command that writes to a buffer object from host memory, and
     returns an event object for the command. If `blocking` is **true**, the
     function waits for the command to complete; otherwise, if **false**, the
     function returns immediately. The command writes to the buffer region
-    specified by `offset` and `size` in bytes. The command reads from the host
-    memory region specified by `ptr`.
+    specified by `offset` and `size` in bytes (default values are **0** and
+    the size of the buffer). The command reads from the host memory region
+    specified by `ptr`.
 
     If `events` is specified, the command is executed after the given events
     have completed.
 
-`queue:enqueue_copy_buffer(src_buffer, dst_buffer, src_offset, dst_offset, size[, events])`
+`queue:enqueue_copy_buffer(src_buffer, dst_buffer[, src_offset, dst_offset, size[, events]])`
 
   : Enqueues a command that copies from a source buffer to a destination buffer,
     and returns an event object for the command. The command copies `size`
     bytes from the source buffer region specified by `src_offset` in bytes to
-    the destination buffer region specified by `dst_offset` in bytes.
+    the destination buffer region specified by `dst_offset` in bytes (default
+    values are **0** for `src_offset` and `dst_offset`, and the size of the
+    source buffer for `size`).
 
     If `events` is specified, the command is executed after the given events
     have completed.
 
-`queue:enqueue_fill_buffer(buffer, pattern, pattern_size, offset, size[, events])`
+`queue:enqueue_fill_buffer(buffer, pattern, pattern_size[, offset, size[, events]])`
 
   : Enqueues a command that fills a buffer with a constant value, and returns
     an event object for the command. The command reads `pattern_size` bytes
     from the buffer pointed to by `pattern`, and fills the buffer region
-    specified by `offset` and `size` in bytes, where `size` must be a multiple
-    of `pattern_size`.
+    specified by `offset` and `size` in bytes (default values are **0** and
+    the size of the buffer), where `offset` and `size` must be multiples of
+    `pattern_size`.
 
     If `events` is specified, the command is executed after the given events
     have completed.
@@ -525,6 +531,14 @@ Command Queues
 `queue:enqueue_barrier()`
 
   : Enqueues a command that for all previously enqueued commands to complete.
+
+    The command blocks execution of all subsequently enqueued commands.
+
+    *This function has been deprecated in OpenCL 1.2.*
+
+`queue:enqueue_wait_for_events(events)`
+
+  : Enqueues a command that waits for the given events to complete.
 
     The command blocks execution of all subsequently enqueued commands.
 

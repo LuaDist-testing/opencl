@@ -180,7 +180,7 @@ work group may communicate via synchronization points and local memory.
 Next we map the memory buffer containing the image to a host pointer:
 
 ~~~ {.lua}
-local image = ffi.cast("cl_uchar3 *", queue:enqueue_map_buffer(d_image, true, "read", 0, Nx * Ny * ffi.sizeof("cl_uchar3")))
+local image = ffi.cast("cl_uchar3 *", queue:enqueue_map_buffer(d_image, true, "read"))
 ~~~
 
 By passing **true** as the second argument we specify that the map command is

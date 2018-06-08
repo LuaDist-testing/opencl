@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- Test kernels.
--- Copyright © 2013–2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -90,7 +90,7 @@ table.insert(tests, function(device)
   local glob_size = math.ceil(N / work_size) * work_size
   kernel:set_arg(0, work_size * ffi.sizeof("cl_uint"))
   kernel:set_arg(1, d_buf)
-  kernel:set_arg(2, ffi.sizeof("cl_ulong"), ffi.new("cl_ulong[1]", N))
+  kernel:set_arg(2, ffi.new("cl_ulong[1]", N))
   queue:enqueue_ndrange_kernel(kernel, nil, {glob_size}, {work_size})
   local buf = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf, true, "read", 0, N * ffi.sizeof("cl_uint")))
   for i = 0, N - 1 do
@@ -164,8 +164,8 @@ table.insert(tests, function(device)
   local context = cl.create_context({device})
   local program = context:create_program_with_source([[
     __kernel void test(
-      __global double *restrict d_position,
-      __constant double *restrict d_velocity,
+      __global int *restrict d_position,
+      __constant uint *restrict d_velocity,
       __local volatile float *restrict l_force,
       ulong N)
     {
@@ -177,7 +177,7 @@ table.insert(tests, function(device)
   assert(kernel:get_arg_info(0, "name") == "d_position")
   assert(kernel:get_arg_info(0, "address_qualifier") == "global")
   assert(kernel:get_arg_info(0, "access_qualifier") == nil)
-  assert(kernel:get_arg_info(0, "type_name") == "double*")
+  assert(kernel:get_arg_info(0, "type_name") == "int*")
   local type_qualifier = kernel:get_arg_info(0, "type_qualifier")
   assert(type_qualifier.const == nil)
   assert(type_qualifier.restrict == true)
@@ -186,7 +186,7 @@ table.insert(tests, function(device)
   assert(kernel:get_arg_info(1, "name") == "d_velocity")
   assert(kernel:get_arg_info(1, "address_qualifier") == "constant")
   assert(kernel:get_arg_info(1, "access_qualifier") == nil)
-  assert(kernel:get_arg_info(1, "type_name") == "double*")
+  assert(kernel:get_arg_info(1, "type_name") == "uint*")
   local type_qualifier = kernel:get_arg_info(1, "type_qualifier")
   assert(type_qualifier.const == true)
   assert(type_qualifier.restrict == true)

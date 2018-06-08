@@ -1,7 +1,7 @@
 #!/usr/bin/env luajit
 ------------------------------------------------------------------------------
 -- Sum scalars in parallel using OpenCL.
--- Copyright © 2014 Peter Colberg.
+-- Copyright © 2013–2015 Peter Colberg.
 -- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ local queue = context:create_command_queue(device)
 
 local N = 1000000
 local d_v = context:create_buffer(N * ffi.sizeof("cl_double3"))
-local v = ffi.cast("cl_double3 *", queue:enqueue_map_buffer(d_v, true, "write", 0, N * ffi.sizeof("cl_double3")))
+local v = ffi.cast("cl_double3 *", queue:enqueue_map_buffer(d_v, true, "write"))
 for i = 0, N - 1, 2 do
   v[i].x, v[i + 1].x = random.normal()
   v[i].y, v[i + 1].y = random.normal()
@@ -74,7 +74,7 @@ kernel:set_arg(1, d_en)
 queue:enqueue_ndrange_kernel(kernel, nil, {glob_size}, {work_size})
 
 local sum = 0
-local en = ffi.cast("cl_double *", queue:enqueue_map_buffer(d_en, true, "read", 0, num_groups * ffi.sizeof("cl_double")))
+local en = ffi.cast("cl_double *", queue:enqueue_map_buffer(d_en, true, "read"))
 for i = 0, num_groups - 1 do sum = sum + en[i] end
 queue:enqueue_unmap_mem_object(d_en, en)
 print(0.5 * sum / N)
