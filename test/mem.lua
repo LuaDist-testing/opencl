@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 -- Test memory objects.
 -- Copyright © 2013–2014 Peter Colberg.
--- For conditions of distribution and use, see copyright notice in LICENSE.
+-- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
 require("strict")
@@ -145,11 +145,11 @@ table.insert(tests, function(device)
     ptr[i] = i + 1
   end
   queue:enqueue_unmap_mem_object(d_buf1, ptr)
-  local region = {N / 4 * ffi.sizeof("cl_int"), N / 2 * ffi.sizeof("cl_int")}
+  local region = {0, N / 2 * ffi.sizeof("cl_int")}
   local d_buf2 = d_buf1:create_sub_buffer("region", region)
   local ptr = ffi.cast("cl_int *", queue:enqueue_map_buffer(d_buf2, true, "read", 0, N / 2 * ffi.sizeof("cl_int")))
   for i = 0, N / 2 - 1 do
-    assert(ptr[i] == N / 4 + i + 1)
+    assert(ptr[i] == i + 1)
   end
   queue:enqueue_unmap_mem_object(d_buf2, ptr)
   local region = {N / 2 * ffi.sizeof("cl_int"), N / 2 * ffi.sizeof("cl_int")}

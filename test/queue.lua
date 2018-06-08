@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 -- Test command queues.
 -- Copyright © 2013–2014 Peter Colberg.
--- For conditions of distribution and use, see copyright notice in LICENSE.
+-- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
 require("strict")
@@ -74,18 +74,21 @@ table.insert(tests, function(device)
   local context = cl.create_context({device})
   local queue = context:create_command_queue(device)
   local program = context:create_program_with_source([[
-  __kernel void test(__global uint *restrict d_buf)
+  __kernel void test(__global uint *restrict d_buf, ulong N)
   {
     const size_t gid = get_global_id(0);
-    d_buf[gid - 1] = gid;
+    if (gid <= N) d_buf[gid - 1] = gid;
   }
   ]])
   program:build()
   local kernel = program:create_kernel("test")
-  local N = 2 ^ 10
+  local N = 12345
   local d_buf = context:create_buffer(N * ffi.sizeof("cl_uint"))
+  local work_size = kernel:get_work_group_info(device, "work_group_size")
+  local glob_size = math.ceil(N / work_size) * work_size
   kernel:set_arg(0, d_buf)
-  queue:enqueue_ndrange_kernel(kernel, {1}, {N}, {32})
+  kernel:set_arg(1, ffi.sizeof("cl_ulong"), ffi.new("cl_ulong[1]", N))
+  queue:enqueue_ndrange_kernel(kernel, {1}, {glob_size}, {work_size})
   local buf = ffi.cast("cl_uint *", queue:enqueue_map_buffer(d_buf, true, "read", 0, N * ffi.sizeof("cl_uint")))
   for i = 0, N - 1 do
     assert(buf[i] == i + 1)

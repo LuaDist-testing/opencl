@@ -2,7 +2,7 @@
 ------------------------------------------------------------------------------
 -- Sum scalars in parallel using OpenCL.
 -- Copyright © 2014 Peter Colberg.
--- For conditions of distribution and use, see copyright notice in LICENSE.
+-- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
 local cl = require("opencl")

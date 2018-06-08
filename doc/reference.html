@@ -369,6 +369,34 @@
 <li><strong>&quot;attributes</strong>&quot; <em>(OpenCL 1.2)</em>: a string with a space-separated list of kernel attributes.</li>
 </ul>
 </dd>
+<dt><code>kernel:get_arg_info(index, name)</code></dt>
+<dd><p>Queries information about the kernel argument at the given 0-based <code>index</code>.</p>
+<p><code>name</code> can be any of the following, in which case the function returns:</p>
+<ul>
+<li><strong>&quot;address_qualifier</strong>&quot;: the address <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/qualifiers.html">qualifier</a> of the argument type:
+<ul>
+<li><strong>&quot;global&quot;</strong>: global memory,</li>
+<li><strong>&quot;local&quot;</strong>: local memory,</li>
+<li><strong>&quot;constant&quot;</strong>: constant memory,</li>
+<li><strong>&quot;private&quot;</strong>: private memory (the default);</li>
+</ul></li>
+<li><strong>&quot;access_qualifier</strong>&quot;: the <a href="http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/accessQualifiers.html">access qualifier</a> of the argument type:
+<ul>
+<li><strong>&quot;read_only&quot;</strong>: read-only image,</li>
+<li><strong>&quot;write_only&quot;</strong>: write-only image,</li>
+<li><strong>&quot;read_write&quot;</strong>: read-write image;</li>
+</ul></li>
+<li><strong>&quot;type_name</strong>&quot;: the name of the argument type without qualifiers;</li>
+<li><strong>&quot;type_qualifier</strong>&quot;: a table with the argument type qualifiers (<strong>true</strong> or <strong>nil</strong>):
+<ul>
+<li><strong>&quot;const&quot;</strong>: constant type,</li>
+<li><strong>&quot;restrict&quot;</strong>: restricted pointer type,</li>
+<li><strong>&quot;volatile&quot;</strong>: volatile pointer type;</li>
+</ul></li>
+<li><strong>&quot;name</strong>&quot;: the name of the argument.</li>
+</ul>
+<p><em>This function is available with OpenCL 1.2.</em></p>
+</dd>
 <dt><code>kernel:get_work_group_info([device, ]name)</code></dt>
 <dd><p>Query work group information for a device about the kernel.</p>
 <p><code>device</code> may be omitted if the kernel is associated with a single device.</p>

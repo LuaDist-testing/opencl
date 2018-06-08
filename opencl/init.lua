@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 -- OpenCL for Lua.
 -- Copyright © 2013–2014 Peter Colberg.
--- For conditions of distribution and use, see copyright notice in LICENSE.
+-- Distributed under the MIT license. (See accompanying file LICENSE.)
 ------------------------------------------------------------------------------
 
 local C = require("opencl.C")
@@ -11,72 +11,78 @@ local ffi = require("ffi")
 local _M = {}
 
 -- C types.
-local char_n                         = ffi.typeof("char[?]")
-local cl_bool                        = ffi.typeof("cl_bool")
-local cl_bool_1                      = ffi.typeof("cl_bool[1]")
-local cl_buffer_region               = ffi.typeof("cl_buffer_region")
-local cl_build_status                = ffi.typeof("cl_build_status")
-local cl_build_status_1              = ffi.typeof("cl_build_status[1]")
-local cl_command_queue               = ffi.typeof("cl_command_queue")
-local cl_command_queue_1             = ffi.typeof("cl_command_queue[1]")
-local cl_command_queue_properties    = ffi.typeof("cl_command_queue_properties")
-local cl_command_queue_properties_1  = ffi.typeof("cl_command_queue_properties[1]")
-local cl_command_type                = ffi.typeof("cl_command_type")
-local cl_command_type_1              = ffi.typeof("cl_command_type[1]")
-local cl_context                     = ffi.typeof("cl_context")
-local cl_context_1                   = ffi.typeof("cl_context[1]")
-local cl_device_affinity_domain      = ffi.typeof("cl_device_affinity_domain")
-local cl_device_affinity_domain_1    = ffi.typeof("cl_device_affinity_domain[1]")
-local cl_device_exec_capabilities    = ffi.typeof("cl_device_exec_capabilities")
-local cl_device_exec_capabilities_1  = ffi.typeof("cl_device_exec_capabilities[1]")
-local cl_device_fp_config            = ffi.typeof("cl_device_fp_config")
-local cl_device_fp_config_1          = ffi.typeof("cl_device_fp_config[1]")
-local cl_device_id                   = ffi.typeof("cl_device_id")
-local cl_device_id_1                 = ffi.typeof("cl_device_id[1]")
-local cl_device_id_n                 = ffi.typeof("cl_device_id[?]")
-local cl_device_local_mem_type       = ffi.typeof("cl_device_local_mem_type")
-local cl_device_local_mem_type_1     = ffi.typeof("cl_device_local_mem_type[1]")
-local cl_device_mem_cache_type       = ffi.typeof("cl_device_mem_cache_type")
-local cl_device_mem_cache_type_1     = ffi.typeof("cl_device_mem_cache_type[1]")
-local cl_device_partition_property   = ffi.typeof("cl_device_partition_property")
-local cl_device_partition_property_3 = ffi.typeof("cl_device_partition_property[3]")
-local cl_device_partition_property_n = ffi.typeof("cl_device_partition_property[?]")
-local cl_device_type                 = ffi.typeof("cl_device_type")
-local cl_device_type_1               = ffi.typeof("cl_device_type[1]")
-local cl_event_1                     = ffi.typeof("cl_event[1]")
-local cl_event_n                     = ffi.typeof("cl_event[?]")
-local cl_int                         = ffi.typeof("cl_int")
-local cl_int_1                       = ffi.typeof("cl_int[1]")
-local cl_kernel_n                    = ffi.typeof("cl_kernel[?]")
-local cl_mem                         = ffi.typeof("cl_mem")
-local cl_mem_1                       = ffi.typeof("cl_mem[1]")
-local cl_mem_flags                   = ffi.typeof("cl_mem_flags")
-local cl_mem_flags_1                 = ffi.typeof("cl_mem_flags[1]")
-local cl_mem_object_type             = ffi.typeof("cl_mem_object_type")
-local cl_mem_object_type_1           = ffi.typeof("cl_mem_object_type[1]")
-local cl_platform_id                 = ffi.typeof("cl_platform_id")
-local cl_platform_id_1               = ffi.typeof("cl_platform_id[1]")
-local cl_platform_id_n               = ffi.typeof("cl_platform_id[?]")
-local cl_program                     = ffi.typeof("cl_program")
-local cl_program_1                   = ffi.typeof("cl_program[1]")
-local cl_program_binary_type         = ffi.typeof("cl_program_binary_type")
-local cl_program_binary_type_1       = ffi.typeof("cl_program_binary_type[1]")
-local cl_sampler                     = ffi.typeof("cl_sampler")
-local cl_sampler_1                   = ffi.typeof("cl_sampler[1]")
-local cl_uint                        = ffi.typeof("cl_uint")
-local cl_uint_1                      = ffi.typeof("cl_uint[1]")
-local cl_ulong                       = ffi.typeof("cl_ulong")
-local cl_ulong_1                     = ffi.typeof("cl_ulong[1]")
-local const_char_ptr                 = ffi.typeof("const char *")
-local const_char_ptr_1               = ffi.typeof("const char *[1]")
-local size_t                         = ffi.typeof("size_t")
-local size_t_1                       = ffi.typeof("size_t[1]")
-local size_t_n                       = ffi.typeof("size_t[?]")
-local unsigned_char_n                = ffi.typeof("unsigned char[?]")
-local unsigned_char_ptr              = ffi.typeof("unsigned char *")
-local unsigned_char_ptr_n            = ffi.typeof("unsigned char *[?]")
-local void_ptr                       = ffi.typeof("void *")
-local void_ptr_1                     = ffi.typeof("void *[1]")
+local char_n                            = ffi.typeof("char[?]")
+local cl_bool                           = ffi.typeof("cl_bool")
+local cl_bool_1                         = ffi.typeof("cl_bool[1]")
+local cl_buffer_region                  = ffi.typeof("cl_buffer_region")
+local cl_build_status                   = ffi.typeof("cl_build_status")
+local cl_build_status_1                 = ffi.typeof("cl_build_status[1]")
+local cl_command_queue                  = ffi.typeof("cl_command_queue")
+local cl_command_queue_1                = ffi.typeof("cl_command_queue[1]")
+local cl_command_queue_properties       = ffi.typeof("cl_command_queue_properties")
+local cl_command_queue_properties_1     = ffi.typeof("cl_command_queue_properties[1]")
+local cl_command_type                   = ffi.typeof("cl_command_type")
+local cl_command_type_1                 = ffi.typeof("cl_command_type[1]")
+local cl_context                        = ffi.typeof("cl_context")
+local cl_context_1                      = ffi.typeof("cl_context[1]")
+local cl_device_affinity_domain         = ffi.typeof("cl_device_affinity_domain")
+local cl_device_affinity_domain_1       = ffi.typeof("cl_device_affinity_domain[1]")
+local cl_device_exec_capabilities       = ffi.typeof("cl_device_exec_capabilities")
+local cl_device_exec_capabilities_1     = ffi.typeof("cl_device_exec_capabilities[1]")
+local cl_device_fp_config               = ffi.typeof("cl_device_fp_config")
+local cl_device_fp_config_1             = ffi.typeof("cl_device_fp_config[1]")
+local cl_device_id                      = ffi.typeof("cl_device_id")
+local cl_device_id_1                    = ffi.typeof("cl_device_id[1]")
+local cl_device_id_n                    = ffi.typeof("cl_device_id[?]")
+local cl_device_local_mem_type          = ffi.typeof("cl_device_local_mem_type")
+local cl_device_local_mem_type_1        = ffi.typeof("cl_device_local_mem_type[1]")
+local cl_device_mem_cache_type          = ffi.typeof("cl_device_mem_cache_type")
+local cl_device_mem_cache_type_1        = ffi.typeof("cl_device_mem_cache_type[1]")
+local cl_device_partition_property      = ffi.typeof("cl_device_partition_property")
+local cl_device_partition_property_3    = ffi.typeof("cl_device_partition_property[3]")
+local cl_device_partition_property_n    = ffi.typeof("cl_device_partition_property[?]")
+local cl_device_type                    = ffi.typeof("cl_device_type")
+local cl_device_type_1                  = ffi.typeof("cl_device_type[1]")
+local cl_event_1                        = ffi.typeof("cl_event[1]")
+local cl_event_n                        = ffi.typeof("cl_event[?]")
+local cl_int                            = ffi.typeof("cl_int")
+local cl_int_1                          = ffi.typeof("cl_int[1]")
+local cl_kernel_n                       = ffi.typeof("cl_kernel[?]")
+local cl_kernel_arg_access_qualifier    = ffi.typeof("cl_kernel_arg_access_qualifier")
+local cl_kernel_arg_access_qualifier_1  = ffi.typeof("cl_kernel_arg_access_qualifier[1]")
+local cl_kernel_arg_address_qualifier   = ffi.typeof("cl_kernel_arg_address_qualifier")
+local cl_kernel_arg_address_qualifier_1 = ffi.typeof("cl_kernel_arg_address_qualifier[1]")
+local cl_kernel_arg_type_qualifier      = ffi.typeof("cl_kernel_arg_type_qualifier")
+local cl_kernel_arg_type_qualifier_1    = ffi.typeof("cl_kernel_arg_type_qualifier[1]")
+local cl_mem                            = ffi.typeof("cl_mem")
+local cl_mem_1                          = ffi.typeof("cl_mem[1]")
+local cl_mem_flags                      = ffi.typeof("cl_mem_flags")
+local cl_mem_flags_1                    = ffi.typeof("cl_mem_flags[1]")
+local cl_mem_object_type                = ffi.typeof("cl_mem_object_type")
+local cl_mem_object_type_1              = ffi.typeof("cl_mem_object_type[1]")
+local cl_platform_id                    = ffi.typeof("cl_platform_id")
+local cl_platform_id_1                  = ffi.typeof("cl_platform_id[1]")
+local cl_platform_id_n                  = ffi.typeof("cl_platform_id[?]")
+local cl_program                        = ffi.typeof("cl_program")
+local cl_program_1                      = ffi.typeof("cl_program[1]")
+local cl_program_binary_type            = ffi.typeof("cl_program_binary_type")
+local cl_program_binary_type_1          = ffi.typeof("cl_program_binary_type[1]")
+local cl_sampler                        = ffi.typeof("cl_sampler")
+local cl_sampler_1                      = ffi.typeof("cl_sampler[1]")
+local cl_uint                           = ffi.typeof("cl_uint")
+local cl_uint_1                         = ffi.typeof("cl_uint[1]")
+local cl_ulong                          = ffi.typeof("cl_ulong")
+local cl_ulong_1                        = ffi.typeof("cl_ulong[1]")
+local const_char_ptr                    = ffi.typeof("const char *")
+local const_char_ptr_1                  = ffi.typeof("const char *[1]")
+local size_t                            = ffi.typeof("size_t")
+local size_t_1                          = ffi.typeof("size_t[1]")
+local size_t_n                          = ffi.typeof("size_t[?]")
+local unsigned_char_n                   = ffi.typeof("unsigned char[?]")
+local unsigned_char_ptr                 = ffi.typeof("unsigned char *")
+local unsigned_char_ptr_n               = ffi.typeof("unsigned char *[?]")
+local void_ptr                          = ffi.typeof("void *")
+local void_ptr_1                        = ffi.typeof("void *[1]")
 
 -- Object methods.
 local platform = {}
@@ -199,7 +205,7 @@ do
     return function(platform)
       local size = size_t_1()
       local status = C.clGetPlatformInfo(platform, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if size[0] == 0 then return end
       local value = char_n(size[0])
@@ -228,7 +234,7 @@ do
   }
 
   function platform.get_devices(platform, device_type)
-    device_type = device_type ~= nil and strtobit(device_type, device_types) or C.CL_DEVICE_TYPE_ALL
+    if device_type ~= nil then device_type = strtobit(device_type, device_types) else device_type = C.CL_DEVICE_TYPE_ALL end
     local num_devices = cl_uint_1()
     local status = C.clGetDeviceIDs(platform, device_type, 0, nil, num_devices)
     if status == C.CL_DEVICE_NOT_FOUND then return end
@@ -248,7 +254,7 @@ do
     return function(device)
       local value = size_t_1()
       local status = C.clGetDeviceInfo(device, name, ffi.sizeof(size_t), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if value[0] == 0 then return nil end
       return tonumber(value[0])
@@ -259,7 +265,7 @@ do
     return function(device)
       local value = cl_uint_1()
       local status = C.clGetDeviceInfo(device, name, ffi.sizeof(cl_uint), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if value[0] == 0 then return nil end
       return tonumber(value[0])
@@ -270,7 +276,7 @@ do
     return function(device)
       local value = cl_ulong_1()
       local status = C.clGetDeviceInfo(device, name, ffi.sizeof(cl_ulong), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if value[0] == 0 then return nil end
       return tonumber(value[0])
@@ -281,7 +287,7 @@ do
     return function(device)
       local value = cl_bool_1()
       local status = C.clGetDeviceInfo(device, name, ffi.sizeof(cl_bool), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0] == C.CL_TRUE
     end
@@ -291,7 +297,7 @@ do
     return function(device)
       local size = size_t_1()
       local status = C.clGetDeviceInfo(device, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if size[0] == 0 then return end
       local value = char_n(size[0])
@@ -315,7 +321,7 @@ do
     return function(device)
       local value = cl_device_fp_config_1()
       local status = C.clGetDeviceInfo(device, name, ffi.sizeof(cl_device_fp_config), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if value[0] == 0 then return nil end
       return bittobool(tonumber(value[0]), device_fp_config)
@@ -330,7 +336,7 @@ do
   local function get_device_info_execution_capabilities(device)
     local value = cl_device_exec_capabilities_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_EXECUTION_CAPABILITIES, ffi.sizeof(cl_device_exec_capabilities), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == 0 then return nil end
     return bittobool(tonumber(value[0]), device_exec_capabilities)
@@ -344,7 +350,7 @@ do
   local function get_device_info_global_mem_cache_type(device)
     local value = cl_device_mem_cache_type_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, ffi.sizeof(cl_device_mem_cache_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == C.CL_NONE then return nil end
     return device_mem_cache_type[value[0]]
@@ -358,7 +364,7 @@ do
   local function get_device_info_local_mem_type(device)
     local value = cl_device_local_mem_type_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_LOCAL_MEM_TYPE, ffi.sizeof(cl_device_local_mem_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == C.CL_NONE then return nil end
     return device_local_mem_type[value[0]]
@@ -368,7 +374,7 @@ do
     return function(device)
       local size = size_t_1()
       local status = C.clGetDeviceInfo(device, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       local num_sizes = tonumber(size[0]) / ffi.sizeof(size_t)
       local value = size_t_n(num_sizes)
@@ -383,7 +389,7 @@ do
   local function get_device_info_parent_device(device)
     local value = cl_device_id_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PARENT_DEVICE, ffi.sizeof(cl_device_id), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] ~= nil then return cl_device_id(value[0]) end
   end
@@ -391,7 +397,7 @@ do
   local function get_device_info_platform(device)
     local value = cl_platform_id_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PLATFORM, ffi.sizeof(cl_platform_id), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] ~= nil then return cl_platform_id(value[0]) end
   end
@@ -407,7 +413,7 @@ do
   local function get_device_info_type(device)
     local value = cl_device_type_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_TYPE, ffi.sizeof(cl_device_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == 0 then return nil end
     return bittobool(tonumber(value[0]), device_type)
@@ -421,7 +427,7 @@ do
   local function get_device_info_queue_properties(device)
     local value = cl_command_queue_properties_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_QUEUE_PROPERTIES, ffi.sizeof(cl_command_queue_properties), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == 0 then return nil end
     return bittobool(tonumber(value[0]), command_queue_properties)
@@ -436,7 +442,7 @@ do
   local function get_device_info_partition_properties(device)
     local size = size_t_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PARTITION_PROPERTIES, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_properties = tonumber(size[0]) / ffi.sizeof(cl_device_partition_property)
     local value = cl_device_partition_property_n(num_properties)
@@ -463,7 +469,7 @@ do
   local function get_device_info_partition_affinity_domain(device)
     local value = cl_device_affinity_domain_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PARTITION_AFFINITY_DOMAIN, ffi.sizeof(cl_device_affinity_domain), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == 0 then return end
     return bittobool(tonumber(value[0]), partition_affinity_domain)
@@ -491,7 +497,7 @@ do
   local function get_device_info_partition_type(device)
     local size = size_t_1()
     local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PARTITION_TYPE, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_properties = tonumber(size[0]) / ffi.sizeof(cl_device_partition_property)
     local value = cl_device_partition_property_n(num_properties + 1)
@@ -586,7 +592,8 @@ end
 local function retain_device(device)
   local value = cl_device_id_1()
   local status = C.clGetDeviceInfo(device, C.CL_DEVICE_PARENT_DEVICE, ffi.sizeof(cl_device_id), value, nil)
-  if status ~= C.CL_SUCCESS and status ~= C.CL_INVALID_VALUE then return error(errors[status]) end
+  if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return device end
+  if status ~= C.CL_SUCCESS then return error(errors[status]) end
   if value[0] == nil then return device end
   local status = C.clRetainDevice(device)
   if status ~= C.CL_SUCCESS then return error(errors[status]) end
@@ -662,7 +669,7 @@ do
     return function(context)
       local value = cl_uint_1()
       local status = C.clGetContextInfo(context, name, ffi.sizeof(cl_uint), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0]
     end
@@ -671,7 +678,7 @@ do
   local function get_context_info_devices(context)
     local size = size_t_1()
     local status = C.clGetContextInfo(context, C.CL_CONTEXT_DEVICES, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_devices = tonumber(size[0]) / ffi.sizeof(cl_device_id)
     local value = cl_device_id_n(num_devices)
@@ -714,7 +721,7 @@ do
 
   function context.create_buffer(context, flags, size, host_ptr)
     if tonumber(flags) ~= nil then flags, size, host_ptr = nil, flags, size end
-    flags = flags ~= nil and strtobit(flags, create_buffer_flags) or 0
+    if flags ~= nil then flags = strtobit(flags, create_buffer_flags) else flags = 0 end
     local status = cl_int_1()
     local mem = C.clCreateBuffer(context, flags, size, host_ptr, status)
     if status[0] ~= C.CL_SUCCESS then return error(errors[status[0]]) end
@@ -727,7 +734,7 @@ do
 
   function mem.create_sub_buffer(buffer, flags, create_type, create_info)
     if create_info == nil then flags, create_type, create_info = nil, flags, create_type end
-    flags = flags ~= nil and strtobit(flags, create_buffer_flags) or 0
+    if flags ~= nil then flags = strtobit(flags, create_buffer_flags) else flags = 0 end
     create_type = create_sub_buffer_flags[create_type]
     create_info = cl_buffer_region(create_info)
     local status = cl_int_1()
@@ -751,7 +758,7 @@ do
   local function get_mem_object_info_type(mem)
     local value = cl_mem_object_type_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_TYPE, ffi.sizeof(cl_mem_object_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return mem_type[value[0]]
   end
@@ -771,7 +778,7 @@ do
   local function get_mem_object_info_flags(mem)
     local value = cl_mem_flags_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_FLAGS, ffi.sizeof(cl_mem_flags), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return bittobool(tonumber(value[0]), mem_flags)
   end
@@ -779,7 +786,7 @@ do
   local function get_mem_object_info_size(mem)
     local value = size_t_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_SIZE, ffi.sizeof(size_t), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return tonumber(value[0])
   end
@@ -787,7 +794,7 @@ do
   local function get_mem_object_info_host_ptr(mem)
     local value = void_ptr_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_HOST_PTR, ffi.sizeof(void_ptr), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == nil then return end
     return value[0]
@@ -797,7 +804,7 @@ do
     return function(mem)
       local value = cl_uint_1()
       local status = C.clGetMemObjectInfo(mem, name, ffi.sizeof(cl_uint), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0]
     end
@@ -806,7 +813,7 @@ do
   local function get_mem_object_info_context(mem)
     local value = cl_context_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_CONTEXT, ffi.sizeof(cl_context), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_context(value[0])
   end
@@ -814,7 +821,7 @@ do
   local function get_mem_object_info_associated_memobject(mem)
     local value = cl_mem_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_ASSOCIATED_MEMOBJECT, ffi.sizeof(cl_mem), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == nil then return end
     return retain_mem_object(value[0])
@@ -823,7 +830,7 @@ do
   local function get_mem_object_info_offset(mem)
     local value = cl_mem_1()
     local status = C.clGetMemObjectInfo(mem, C.CL_MEM_ASSOCIATED_MEMOBJECT, ffi.sizeof(cl_mem), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == nil then return end
     local value = size_t_1()
@@ -877,7 +884,7 @@ do
     return function(program)
       local value = cl_uint_1()
       local status = C.clGetProgramInfo(program, name, ffi.sizeof(cl_uint), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0]
     end
@@ -886,7 +893,7 @@ do
   local function get_program_info_context(program)
     local value = cl_context_1()
     local status = C.clGetProgramInfo(program, C.CL_PROGRAM_CONTEXT, ffi.sizeof(cl_context), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_context(value[0])
   end
@@ -894,7 +901,7 @@ do
   local function get_program_info_devices(program)
     local size = size_t_1()
     local status = C.clGetProgramInfo(program, C.CL_PROGRAM_DEVICES, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_devices = tonumber(size[0]) / ffi.sizeof(cl_device_id)
     local value = cl_device_id_n(num_devices)
@@ -909,7 +916,7 @@ do
     return function(program)
       local size = size_t_1()
       local status = C.clGetProgramInfo(program, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if size[0] == 0 then return end
       local value = char_n(size[0])
@@ -922,7 +929,7 @@ do
   local function get_program_info_binary_sizes(program)
     local size = size_t_1()
     local status = C.clGetProgramInfo(program, C.CL_PROGRAM_BINARY_SIZES, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_binaries = tonumber(size[0]) / ffi.sizeof(size_t)
     local value = size_t_n(num_binaries)
@@ -936,7 +943,7 @@ do
   local function get_program_info_binaries(program)
     local size = size_t_1()
     local status = C.clGetProgramInfo(program, C.CL_PROGRAM_BINARY_SIZES, 0, nil, size)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     local num_binaries = tonumber(size[0]) / ffi.sizeof(size_t)
     local binary_sizes = size_t_n(num_binaries)
@@ -960,7 +967,7 @@ do
   local function get_program_info_num_kernels(program)
     local value = size_t_1()
     local status = C.clGetProgramInfo(program, C.CL_PROGRAM_NUM_KERNELS, ffi.sizeof(size_t), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return tonumber(value[0])
   end
@@ -989,7 +996,7 @@ do
     return function(program, device)
       local size = size_t_1()
       local status = C.clGetProgramBuildInfo(program, device, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if size[0] == 0 then return end
       local value = char_n(size[0])
@@ -1008,7 +1015,7 @@ do
   local function get_program_build_info_status(program, device)
     local value = cl_build_status_1()
     local status = C.clGetProgramBuildInfo(program, device, C.CL_PROGRAM_BUILD_STATUS, ffi.sizeof(cl_build_status), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == C.CL_BUILD_NONE then return nil end
     return build_status[value[0]]
@@ -1023,7 +1030,7 @@ do
   local function get_program_build_info_binary_type(program, device)
     local value = cl_program_binary_type_1()
     local status = C.clGetProgramBuildInfo(program, device, C.CL_PROGRAM_BINARY_TYPE, ffi.sizeof(cl_program_binary_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     if value[0] == C.CL_PROGRAM_BINARY_TYPE_NONE then return nil end
     return binary_type[value[0]]
@@ -1070,11 +1077,78 @@ function kernel.set_arg(kernel, index, size, value)
 end
 
 do
+  local function get_kernel_arg_info_string(name)
+    return function(kernel, index)
+      local size = size_t_1()
+      local status = C.clGetKernelArgInfo(kernel, index, name, 0, nil, size)
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
+      if status ~= C.CL_SUCCESS then return error(errors[status]) end
+      if size[0] == 0 then return end
+      local value = char_n(size[0])
+      local status = C.clGetKernelArgInfo(kernel, index, name, size[0], value, nil)
+      if status ~= C.CL_SUCCESS then return error(errors[status]) end
+      return ffi.string(value, size[0] - 1)
+    end
+  end
+
+  local address_qualifier = {
+    [C.CL_KERNEL_ARG_ADDRESS_GLOBAL]   = "global",
+    [C.CL_KERNEL_ARG_ADDRESS_LOCAL]    = "local",
+    [C.CL_KERNEL_ARG_ADDRESS_CONSTANT] = "constant",
+    [C.CL_KERNEL_ARG_ADDRESS_PRIVATE]  = "private",
+  }
+
+  local function get_kernel_arg_info_address_qualifier(kernel, index)
+    local value = cl_kernel_arg_address_qualifier_1()
+    local status = C.clGetKernelArgInfo(kernel, index, C.CL_KERNEL_ARG_ADDRESS_QUALIFIER, ffi.sizeof(cl_kernel_arg_address_qualifier), value, nil)
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
+    if status ~= C.CL_SUCCESS then return error(errors[status]) end
+    return address_qualifier[value[0]]
+  end
+
+  local access_qualifier = {
+    [C.CL_KERNEL_ARG_ACCESS_READ_ONLY]  = "read_only",
+    [C.CL_KERNEL_ARG_ACCESS_WRITE_ONLY] = "write_only",
+    [C.CL_KERNEL_ARG_ACCESS_READ_WRITE] = "read_write",
+  }
+
+  local function get_kernel_arg_info_access_qualifier(kernel, index)
+    local value = cl_kernel_arg_access_qualifier_1()
+    local status = C.clGetKernelArgInfo(kernel, index, C.CL_KERNEL_ARG_ACCESS_QUALIFIER, ffi.sizeof(cl_kernel_arg_access_qualifier), value, nil)
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
+    if status ~= C.CL_SUCCESS then return error(errors[status]) end
+    return access_qualifier[value[0]]
+  end
+
+  local type_qualifier = {
+    [C.CL_KERNEL_ARG_TYPE_CONST]    = "const",
+    [C.CL_KERNEL_ARG_TYPE_RESTRICT] = "restrict",
+    [C.CL_KERNEL_ARG_TYPE_VOLATILE] = "volatile",
+  }
+
+  local function get_kernel_arg_info_arg_type_qualifier(kernel, index)
+    local value = cl_kernel_arg_type_qualifier_1()
+    local status = C.clGetKernelArgInfo(kernel, index, C.CL_KERNEL_ARG_TYPE_QUALIFIER, ffi.sizeof(cl_kernel_arg_type_qualifier), value, nil)
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
+    if status ~= C.CL_SUCCESS then return error(errors[status]) end
+    return bittobool(tonumber(value[0]), type_qualifier)
+  end
+
+  kernel.get_arg_info = get_info_device({
+    address_qualifier = get_kernel_arg_info_address_qualifier,
+    access_qualifier  = get_kernel_arg_info_access_qualifier,
+    type_name         = get_kernel_arg_info_string(C.CL_KERNEL_ARG_TYPE_NAME),
+    type_qualifier    = get_kernel_arg_info_arg_type_qualifier,
+    name              = get_kernel_arg_info_string(C.CL_KERNEL_ARG_NAME),
+  })
+end
+
+do
   local function get_kernel_work_group_info_size(name)
     return function(kernel, device)
       local value = size_t_1()
       local status = C.clGetKernelWorkGroupInfo(kernel, device, name, ffi.sizeof(size_t), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return tonumber(value[0])
     end
@@ -1084,7 +1158,7 @@ do
     return function(kernel, device)
       local size = size_t_1()
       local status = C.clGetKernelWorkGroupInfo(kernel, device, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       local num_sizes = tonumber(size[0]) / ffi.sizeof(size_t)
       local value = size_t_n(num_sizes)
@@ -1100,7 +1174,7 @@ do
     return function(kernel, device)
       local value = cl_ulong_1()
       local status = C.clGetKernelWorkGroupInfo(kernel, device, name, ffi.sizeof(cl_ulong), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return tonumber(value[0])
     end
@@ -1121,7 +1195,7 @@ do
     return function(kernel)
       local size = size_t_1()
       local status = C.clGetKernelInfo(kernel, name, 0, nil, size)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       if size[0] == 0 then return end
       local value = char_n(size[0])
@@ -1135,7 +1209,7 @@ do
     return function(kernel)
       local value = cl_uint_1()
       local status = C.clGetKernelInfo(kernel, name, ffi.sizeof(cl_uint), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0]
     end
@@ -1144,7 +1218,7 @@ do
   local function get_kernel_info_context(kernel)
     local value = cl_context_1()
     local status = C.clGetKernelInfo(kernel, C.CL_KERNEL_CONTEXT, ffi.sizeof(cl_context), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_context(value[0])
   end
@@ -1152,7 +1226,7 @@ do
   local function get_kernel_info_program(kernel)
     local value = cl_program_1()
     local status = C.clGetKernelInfo(kernel, C.CL_KERNEL_PROGRAM, ffi.sizeof(cl_program), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_program(value[0])
   end
@@ -1184,7 +1258,7 @@ do
   }
 
   function context.create_command_queue(context, device, properties)
-    properties = properties ~= nil and strtobit(properties, command_queue_properties) or 0
+    if properties ~= nil then properties = strtobit(properties, command_queue_properties) else properties = 0 end
     local status = cl_int_1()
     local queue = C.clCreateCommandQueue(context, device, properties, status)
     if status[0] ~= C.CL_SUCCESS then return error(errors[status[0]]) end
@@ -1196,7 +1270,7 @@ do
   local function get_command_queue_info_context(queue)
     local value = cl_context_1()
     local status = C.clGetCommandQueueInfo(queue, C.CL_QUEUE_CONTEXT, ffi.sizeof(cl_context), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_context(value[0])
   end
@@ -1204,7 +1278,7 @@ do
   local function get_command_queue_info_device(queue)
     local value = cl_device_id_1()
     local status = C.clGetCommandQueueInfo(queue, C.CL_QUEUE_DEVICE, ffi.sizeof(cl_device_id), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_device(value[0])
   end
@@ -1217,7 +1291,7 @@ do
   local function get_command_queue_info_properties(queue)
     local value = cl_command_queue_properties_1()
     local status = C.clGetCommandQueueInfo(queue, C.CL_QUEUE_PROPERTIES, ffi.sizeof(cl_command_queue_properties), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return bittobool(tonumber(value[0]), command_queue_properties)
   end
@@ -1362,7 +1436,7 @@ do
   local function get_event_info_command_queue(event)
     local value = cl_command_queue_1()
     local status = C.clGetEventInfo(event, C.CL_EVENT_COMMAND_QUEUE, ffi.sizeof(cl_command_queue), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_command_queue(value[0])
   end
@@ -1370,7 +1444,7 @@ do
   local function get_event_info_context(event)
     local value = cl_context_1()
     local status = C.clGetEventInfo(event, C.CL_EVENT_CONTEXT, ffi.sizeof(cl_context), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return retain_context(value[0])
   end
@@ -1402,7 +1476,7 @@ do
   local function get_event_info_command_type(event)
     local value = cl_command_type_1()
     local status = C.clGetEventInfo(event, C.CL_EVENT_COMMAND_TYPE, ffi.sizeof(cl_command_type), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return command_type[value[0]]
   end
@@ -1417,7 +1491,7 @@ do
   local function get_event_info_command_execution_status(event)
     local value = cl_int_1()
     local status = C.clGetEventInfo(event, C.CL_EVENT_COMMAND_EXECUTION_STATUS, ffi.sizeof(cl_int), value, nil)
-    if status == C.CL_INVALID_VALUE then return end
+    if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
     if status ~= C.CL_SUCCESS then return error(errors[status]) end
     return command_execution_status[value[0]]
   end
@@ -1435,7 +1509,7 @@ do
     return function(event)
       local value = cl_ulong_1()
       local status = C.clGetEventProfilingInfo(event, name, ffi.sizeof(cl_ulong), value, nil)
-      if status == C.CL_INVALID_VALUE then return end
+      if status == C.CL_INVALID_VALUE or status == C.CL_INVALID_OPERATION then return end
       if status ~= C.CL_SUCCESS then return error(errors[status]) end
       return value[0]
     end

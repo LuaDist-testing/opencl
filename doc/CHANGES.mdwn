@@ -9,6 +9,16 @@ The version numbers follow [semantic versioning].
 [semantic versioning]: http://semver.org/spec/v2.0.0.html
 
 
+## lua‑opencl 1.1.0 (2014-09-23) {#v1.1.0}
+
+  * Fix test suite on OS X.
+  * Document location of OpenCL library on OS X.
+  * Add method to query information about kernel arguments.
+  * Raise error when passing invalid string flag as argument.
+  * Fix test suite with NVIDIA OpenCL driver.
+
+  Thanks to Saptarshi Guha for contributing to this release.
+
 ## lua‑opencl 1.0.0 (2014-04-03) {#v1.0.0}
 
   * Initial release of OpenCL for Lua.

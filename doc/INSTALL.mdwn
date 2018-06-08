@@ -6,7 +6,7 @@ title: Installing
 Git
 ---
 
-OpenCL for Lua for Lua is available from a [git repository]:
+OpenCL for Lua is available from a [git repository]:
 
 ~~~
 git clone http://git.colberg.org/lua-opencl
@@ -15,13 +15,13 @@ git clone http://git.colberg.org/lua-opencl
 In the repository, checkout the latest release version:
 
 ~~~
-git checkout 1.0.0
+git checkout 1.1.0
 ~~~
 
 If you have GnuPG, verify that the tag is signed by the following key:
 
 ~~~
-git tag -v 1.0.0
+git tag -v 1.1.0
 ~~~
 
 ~~~
@@ -35,13 +35,19 @@ The module is accompanied by a test suite:
 make test
 ~~~
 
+On OS X, you need to make the OpenCL library loadable by the dynamic linker:
+
+~~~
+ln -sf /System/Library/Frameworks/OpenCL.framework/OpenCL /usr/local/lib/libOpenCL.dylib
+~~~
+
 [git repository]: http://git.colberg.org/lua-opencl
 
 
 LuaRocks
 --------
 
-OpenCL for Lua for Lua is available from the default [LuaRocks mirror]:
+OpenCL for Lua is available from [LuaRocks]:
 
 ~~~
 luarocks install --local lua-opencl
@@ -62,18 +68,18 @@ eval `luarocks path`
 If the LuaRocks mirror is not available, install from the git repository above:
 
 ~~~
-luarocks install --local rockspec/lua-opencl-1.0.0-1.rockspec
+luarocks install --local rockspec/lua-opencl-1.1.0-1.rockspec
 ~~~
 
 To install the module directly from the git source, use:
 
 ~~~
-luarocks make --local rockspec/lua-opencl-1.0.0-1.rockspec
+luarocks make --local rockspec/lua-opencl-1.1.0-1.rockspec
 ~~~
 
 In this case you must manually git checkout the corresponding version beforehand.
 
-[LuaRocks mirror]: http://luarocks.org/repositories/rocks/#lua-opencl
+[LuaRocks]: http://luarocks.org/
 
 
 FFI C bindings

@@ -343,6 +343,33 @@ Kernels
       - **"program**": the program;
       - **"attributes**" *(OpenCL 1.2)*: a string with a space-separated list of kernel attributes.
 
+`kernel:get_arg_info(index, name)`
+
+  : Queries information about the kernel argument at the given 0-based `index`.
+
+    `name` can be any of the following, in which case the function returns:
+
+      - **"address_qualifier**": the address [qualifier] of the argument type:
+          - **"global"**: global memory,
+          - **"local"**: local memory,
+          - **"constant"**: constant memory,
+          - **"private"**: private memory (the default);
+      - **"access_qualifier**": the [access qualifier] of the argument type:
+          - **"read_only"**: read-only image,
+          - **"write_only"**: write-only image,
+          - **"read_write"**: read-write image;
+      - **"type_name**": the name of the argument type without qualifiers;
+      - **"type_qualifier**": a table with the argument type qualifiers (**true** or **nil**):
+          - **"const"**: constant type,
+          - **"restrict"**: restricted pointer type,
+          - **"volatile"**: volatile pointer type;
+      - **"name**": the name of the argument.
+
+    *This function is available with OpenCL 1.2.*
+
+    [qualifier]: http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/qualifiers.html
+    [access qualifier]: http://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/accessQualifiers.html
+
 `kernel:get_work_group_info([device, ]name)`
 
   : Query work group information for a device about the kernel.
